@@ -8,21 +8,17 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import java.util.concurrent.CountDownLatch;
+
 public class Main {
 
+    private static CountDownLatch countDownLatch = new CountDownLatch(1);
+
     public static void main(String[] args) throws InterruptedException {
-        try (StandardServiceRegistry standardRegistry = new StandardServiceRegistryBuilder().configure("hibernate.cfg.xml").build()) {
-            Metadata metaData = new MetadataSources(standardRegistry).getMetadataBuilder().build();
-            try (SessionFactory sessionFactory = metaData.getSessionFactoryBuilder().build()) {
-                try(ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("beans.xml")) {
-                    try (Session session = sessionFactory.openSession()) {
 
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> countDownLatch.countDown()));
 
-                    }
-                }
-            }
+        countDownLatch.await();
+
         }
-        Thread.sleep(30_000);
     }
-
-}
