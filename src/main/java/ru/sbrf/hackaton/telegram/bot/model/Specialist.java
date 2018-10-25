@@ -24,6 +24,9 @@ public class Specialist {
     @Column(name = "mobile", nullable = false)
     private String mobile;
 
+    @Column(name = "chatid")
+    private Long chatId;
+
     @ManyToMany
     private List<IssueCategory> categories = new ArrayList<>();
 
@@ -76,5 +79,13 @@ public class Specialist {
 
     public List<IssueCategory> getCategories() {
         return categories;
+    }
+
+    public Long getChatId() {
+        return chatId;
+    }
+
+    public void setChatId(Long chatId) {
+        this.chatId = chatId;
     }
 }
