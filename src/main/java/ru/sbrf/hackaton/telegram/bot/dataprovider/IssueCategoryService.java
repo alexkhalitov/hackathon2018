@@ -12,7 +12,7 @@ import java.util.List;
 public class IssueCategoryService {
 	
 	@Autowired
-    IssueCategoryRepository issueCategoryRepository;
+	private IssueCategoryRepository issueCategoryRepository;
 	
 	/*private List<IssueCategory> categorys = new ArrayList<>(Arrays.asList(
 			new IssueCategory("Spring", "Spring Framework", "Spring Framework Description"),
@@ -26,7 +26,7 @@ public class IssueCategoryService {
 		return categorys;
 	}
 	
-	public IssueCategory getCategory(String id) {
+	public IssueCategory getCategory(long id) {
 		return issueCategoryRepository.findOne(id);
 	}
 	
@@ -34,16 +34,16 @@ public class IssueCategoryService {
 		issueCategoryRepository.save(category);
 	}
 	
-	public void updateCategory(String id, IssueCategory category) {
+	public void updateCategory(long id, IssueCategory category) {
 		issueCategoryRepository.save(category);
 	}
 	
-	public void deleteCategory(String id) {
+	public void deleteCategory(long id) {
 		issueCategoryRepository.delete(id);
 	}
 	
 	
-	/*public IssueCategory getCategory(String id) {
+	/*public IssueCategory getCategory(long id) {
 		return categorys.stream().filter(t -> t.getId().equals(id)).findFirst().get();
 	}
 	
@@ -51,7 +51,7 @@ public class IssueCategoryService {
 		categorys.add(category);
 	}
 
-	public void updateCategory(String id, IssueCategory category) {
+	public void updateCategory(long id, IssueCategory category) {
 
 		for(int i = 0; i < categorys.size(); i++) {
 			
@@ -65,7 +65,7 @@ public class IssueCategoryService {
 		
 	}
 
-	public void deleteCategory(String id) {
+	public void deleteCategory(long id) {
 		categorys.removeIf(t -> t.getId().equals(id));
 		
 	}*/

@@ -77,4 +77,16 @@ public class IssueCategory {
     public void setAnswer(String answer) {
         this.answer = answer;
     }
+
+    @Override
+    public String toString() {
+        return "IssueCategory{" +
+                "id=" + id +
+                ", severity=" + severity +
+                ", children=" + children +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", answer='" + answer + '\'' +
+                '}';
+    }
 }

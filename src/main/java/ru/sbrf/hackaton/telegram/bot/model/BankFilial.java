@@ -52,4 +52,14 @@ public class BankFilial {
     public void setGeoPosition(GeoPosition geoPosition) {
         this.geoPosition = geoPosition;
     }
+
+    @Override
+    public String toString() {
+        return "BankFilial{" +
+                "id=" + id +
+                ", address='" + address + '\'' +
+                ", city=" + city +
+                ", geoPosition=" + geoPosition +
+                '}';
+    }
 }
