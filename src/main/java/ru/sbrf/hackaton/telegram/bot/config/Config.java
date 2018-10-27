@@ -13,9 +13,11 @@ public class Config {
 
     private static final String FILE_LOCATION_PROP = "config.file";
 
-    private String botName;
+    private String specialistBotName;
+    private String speciliastBotToken;
 
-    private String botToken;
+    private String clientBotName;
+    private String clientBotToken;
 
     @PostConstruct
     private void init() throws Exception {
@@ -29,33 +31,25 @@ public class Config {
             fh.load(reader);
         }
 
-        botName = xmlConfiguration.getString("bot.name");
-        botToken = xmlConfiguration.getString("bot.token");
-
-//        List<QueueSettings> queueSettings = xmlConfiguration.configurationsAt("queues.queue").stream().map(node -> {
-//            QueueSettings queueSetting = new QueueSettings();
-//            queueSetting.setQueue(node.getString("queue"));
-//            queueSetting.setQueueConnectionFactory(node.getString("connectionFactoryJndi"));
-//            queueSetting.setQueueType(QueueSettings.QueueType.valueOf(node.getString("type")));
-//            queueSetting.setExecutorsSize(node.getInt("executors"));
-//            return queueSetting;
-//        }).collect(Collectors.toList());
+        specialistBotName = xmlConfiguration.getString("bots.specialist.name");
+        speciliastBotToken = xmlConfiguration.getString("bots.specialist.token");
+        clientBotName = xmlConfiguration.getString("bots.client.name");
+        clientBotToken = xmlConfiguration.getString("bots.client.token");
 
     }
 
-    public String getBotName() {
-        return botName;
+    public String getSpecialistBotName() {
+        return specialistBotName;
+    }
+    public String getSpeciliastBotToken() {
+        return speciliastBotToken;
     }
 
-    public void setBotName(String botName) {
-        this.botName = botName;
+    public String getClientBotName() {
+        return clientBotName;
     }
 
-    public String getBotToken() {
-        return botToken;
-    }
-
-    public void setBotToken(String botToken) {
-        this.botToken = botToken;
+    public String getClientBotToken() {
+        return clientBotToken;
     }
 }
