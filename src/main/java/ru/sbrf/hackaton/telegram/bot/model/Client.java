@@ -16,6 +16,9 @@ public class Client {
     @Column(name = "phone")
     private String phone;
 
+    @Column(name = "chatid")
+    private Long chatId;
+
     @OneToMany(fetch = FetchType.LAZY)
     private List<Issue> issues;
 
@@ -49,5 +52,13 @@ public class Client {
 
     public void setIssues(List<Issue> issues) {
         this.issues = issues;
+    }
+
+    public Long getChatId() {
+        return chatId;
+    }
+
+    public void setChatId(Long chatId) {
+        this.chatId = chatId;
     }
 }
