@@ -13,11 +13,11 @@ public class ClientBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "Sberbot";
+        return "";
     }
 
     @Override
     public String getBotToken() {
-        return "512352697:AAEtgjMGhbjsrttQ6WQy0r1dewNBFIU21Zw";
+        return "";
     }
 }
