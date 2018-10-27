@@ -2,15 +2,15 @@ package ru.sbrf.hackaton.telegram.bot;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import ru.sbrf.hackaton.telegram.bot.dataprovider.CategoryService;
-import ru.sbrf.hackaton.telegram.bot.model.Category;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueCategoryService;
+import ru.sbrf.hackaton.telegram.bot.model.IssueCategory;
 
 import javax.annotation.PostConstruct;
 
 @Component
 public class FillDB {
     @Autowired
-    CategoryService categoryService;
+    IssueCategoryService issueCategoryService;
 
 
     @PostConstruct
@@ -20,9 +20,9 @@ public class FillDB {
     }
 
     private void fillCategories() {
-        Category category = new Category();
+        IssueCategory category = new IssueCategory();
         category.setName("Банкомат");
-        categoryService.addCategory(category);
+        issueCategoryService.addCategory(category);
     }
 
 }
