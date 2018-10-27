@@ -38,8 +38,8 @@ public class SpecialistBot extends TelegramLongPollingBot {
         return config.getBotName();
     }
 
-    public static void main(String[] args) throws InterruptedException {
-    }
+ /*   public static void main(String[] args) throws InterruptedException {
+    }*/
 
 
     @Override
