@@ -3,6 +3,7 @@ package ru.sbrf.hackaton.telegram.bot.model;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Специалист ВСП
@@ -87,5 +88,32 @@ public class Specialist {
 
     public void setChatId(Long chatId) {
         this.chatId = chatId;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Specialist specialist = (Specialist) o;
+        return Objects.equals(id, specialist.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Specialist{" +
+                "id=" + id +
+                ", firstname='" + firstname + '\'' +
+                ", middlename='" + middlename + '\'' +
+                ", lastname='" + lastname + '\'' +
+                ", mobile='" + mobile + '\'' +
+                ", chatId=" + chatId +
+                ", categories=" + categories +
+                ", bankFilials=" + bankFilials +
+                '}';
     }
 }

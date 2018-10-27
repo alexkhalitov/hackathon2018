@@ -62,4 +62,15 @@ public class CashPoint {
     public void setGeoPosition(GeoPosition geoPosition) {
         this.geoPosition = geoPosition;
     }
+
+    @Override
+    public String toString() {
+        return "CashPoint{" +
+                "id=" + id +
+                ", city=" + city +
+                ", bankFilial=" + bankFilial +
+                ", address='" + address + '\'' +
+                ", geoPosition=" + geoPosition +
+                '}';
+    }
 }

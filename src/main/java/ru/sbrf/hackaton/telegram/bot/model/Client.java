@@ -61,4 +61,15 @@ public class Client {
     public void setChatId(Long chatId) {
         this.chatId = chatId;
     }
+
+    @Override
+    public String toString() {
+        return "Client{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", phone='" + phone + '\'' +
+                ", chatId=" + chatId +
+                ", issues=" + issues +
+                '}';
+    }
 }

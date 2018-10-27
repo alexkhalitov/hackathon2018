@@ -1,6 +1,7 @@
 package ru.sbrf.hackaton.telegram.bot.model;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 /**
  * Заявка
@@ -86,5 +87,18 @@ public class Issue {
 
     public void setAssignee(Specialist assignee) {
         this.assignee = assignee;
+    }
+
+    @Override
+    public String toString() {
+        return "Issue{" +
+                "id=" + id +
+                ", client=" + client +
+                ", description='" + description + '\'' +
+                ", geoPosition=" + geoPosition +
+                ", issueCategory=" + issueCategory +
+                ", assignee=" + assignee +
+                ", status=" + status +
+                '}';
     }
 }

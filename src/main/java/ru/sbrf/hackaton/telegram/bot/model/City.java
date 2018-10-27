@@ -50,4 +50,14 @@ public class City {
     public void setFilials(List<BankFilial> filials) {
         this.filials = filials;
     }
+
+    @Override
+    public String toString() {
+        return "City{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", country=" + country +
+                ", filials=" + filials +
+                '}';
+    }
 }
