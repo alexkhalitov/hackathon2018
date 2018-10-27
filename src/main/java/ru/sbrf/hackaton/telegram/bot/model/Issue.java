@@ -1,7 +1,6 @@
 package ru.sbrf.hackaton.telegram.bot.model;
 
 import javax.persistence.*;
-import java.util.Objects;
 
 /**
  * Заявка

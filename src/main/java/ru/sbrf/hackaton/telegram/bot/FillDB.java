@@ -28,6 +28,10 @@ public class FillDB {
         IssueCategory category = new IssueCategory();
         category.setName("Банкомат");
         issueCategoryService.addCategory(category);
+
+        IssueCategory vsp = new IssueCategory();
+        vsp.setName("Обслуживание в филиале");
+        issueCategoryService.addCategory(vsp);
     }
 
     private void fillSpecialists() {
