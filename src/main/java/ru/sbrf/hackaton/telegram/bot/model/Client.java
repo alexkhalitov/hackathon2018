@@ -1,11 +1,17 @@
 package ru.sbrf.hackaton.telegram.bot.model;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name="clients")
 public class Client {
+    public Client() {
+        issues = new ArrayList<>();
+    }
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
@@ -46,6 +52,7 @@ public class Client {
         this.phone = phone;
     }
 
+    @Transactional
     public List<Issue> getIssues() {
         return issues;
     }
