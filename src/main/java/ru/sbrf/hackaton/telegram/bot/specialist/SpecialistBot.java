@@ -17,6 +17,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.sbrf.hackaton.telegram.bot.client.ClientApi;
 import ru.sbrf.hackaton.telegram.bot.config.Config;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.SpecialistService;
 import ru.sbrf.hackaton.telegram.bot.model.Issue;
 import ru.sbrf.hackaton.telegram.bot.model.Specialist;
@@ -25,6 +26,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
 @Service
@@ -34,15 +36,14 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
 
     private final Map<Specialist, Issue> activeIssues = new ConcurrentHashMap<>();
 
-    private final List<Specialist> specialists = new ArrayList<>();
-
-    private final Random random = new Random();
+    private final Map<Long, Specialist> specialists = new HashMap<>();
 
     @Autowired
     private ClientApi clientApi;
-
     @Autowired
     private SpecialistService specialistService;
+    @Autowired
+    private IssueService issueService;
 
     @Autowired
     private Config config;
@@ -61,6 +62,7 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
     public void init() throws TelegramApiRequestException {
         TelegramBotsApi botapi = new TelegramBotsApi();
         botapi.registerBot(this);
+        specialistService.getWithChatId().forEach(sp -> specialists.put(sp.getId(), sp));
     }
 
     @PreDestroy
@@ -88,7 +90,7 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
                     return;
                 }
                 synchronized (specialists) {
-                    specialists.add(specialist);
+                    specialists.put(specialist.getId(), specialist);
                 }
                 return;
             } else {
@@ -165,13 +167,21 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
     public void ask(Issue issue, String question) {
         Specialist victim = issue.getAssignee();
         boolean firstQuestion = false;
-        if(issue.getAssignee() == null) {
+        if(victim == null) {
             synchronized (specialists) {
-                victim = specialists.get(random.nextInt(specialists.size()));
+                for(Specialist specialist : specialists.values()) {
+                    if(activeIssues.get(specialist) == null) {
+                        victim = specialist;
+                        break;
+                    }
+                }
+                if(victim == null) {
+                    throw new RejectedExecutionException("Извините, все специалисты заняты");
+                }
+                issue.setAssignee(victim);
+                issueService.update(issue);
+                activeIssues.put(victim, issue);
             }
-            issue.setAssignee(victim);
-            //todo update issue
-            activeIssues.put(victim, issue);
             firstQuestion = true;
         }
         sendMsg(new SendMessage(victim.getChatId(), "<i>Поступил сообщение по заявке №:"+issue.getId()+'\n'+question+"</i>").enableHtml(true));
