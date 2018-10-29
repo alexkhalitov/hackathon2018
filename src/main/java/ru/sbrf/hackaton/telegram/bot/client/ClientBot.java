@@ -16,12 +16,15 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.sbrf.hackaton.telegram.bot.config.Config;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.ClientService;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.HistoryMessageRepository;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueCategoryService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
 import ru.sbrf.hackaton.telegram.bot.model.Client;
 import ru.sbrf.hackaton.telegram.bot.model.Issue;
 import ru.sbrf.hackaton.telegram.bot.model.IssueCategory;
 import ru.sbrf.hackaton.telegram.bot.model.IssueStatus;
+import ru.sbrf.hackaton.telegram.bot.specialist.SpecialistApi;
+import ru.sbrf.hackaton.telegram.bot.telegramUtils.KeyboardUtils;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -39,40 +42,19 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
     private ClientService clientService;
     @Autowired
     private IssueService issueService;
+    @Autowired
+    private SpecialistApi specialistApi;
+    @Autowired
+    private HistoryMessageRepository historyMessageRepository;
 
     private static SendMessage sayHello(Long chatId) {
         SendMessage sendMessage = new SendMessage()
                 .setChatId(chatId)
                 .setText("Привет! Я сбербанк-бот, чем я могу вам помочь?");
-
-        //sendMessage.enableHtml(true);
-
-        // create keyboard
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        sendMessage.setReplyMarkup(replyKeyboardMarkup);
-        replyKeyboardMarkup.setSelective(true);
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        //replyKeyboardMarkup.setOneTimeKeyboard(true);
-
-        // new list
-        List<KeyboardRow> keyboard = new ArrayList<>();
-
-        // first keyboard line
-        KeyboardRow keyboardFirstRow = new KeyboardRow();
-        KeyboardButton findCashPointkeyboardButton = new KeyboardButton();
-        findCashPointkeyboardButton.setText(ClientBotMenu.FIND_CASHPOINT.getCode()).setRequestLocation(true);
-        KeyboardButton solveProblemKeyboardButton = new KeyboardButton();
-        solveProblemKeyboardButton.setText(ClientBotMenu.SOLVE_PROBLEM.getCode());
-        keyboardFirstRow.add(findCashPointkeyboardButton);
-        keyboardFirstRow.add(solveProblemKeyboardButton);
-
-        // add array to list
-        keyboard.add(keyboardFirstRow);
-
-        // add list to our keyboard
-        replyKeyboardMarkup.setKeyboard(keyboard);
+        sendMessage.setReplyMarkup(KeyboardUtils.getReplyKeyboardMarkup());
         return sendMessage;
     }
+
 
     @PostConstruct
     public void init() throws TelegramApiRequestException {
@@ -82,6 +64,14 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
 
     @Override
     public void onUpdateReceived(Update update) {
+        if (update.hasCallbackQuery()) {
+            processCallback(update);
+        } else if (update.hasMessage()) {
+            processMessage(update);
+        }
+    }
+
+    private void processMessage(Update update) {
         Message msg = update.getMessage();
         String txt = msg.getText();
         Client client = clientService.getByChatId(update.getMessage().getChatId());
@@ -96,23 +86,51 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                     LOGGER.debug("У тебя уже есть необработанное сообщение. Если хочешь что-то добавить, просто напиши");
                 }
             } else {
-                issueService.createNewIssue(client);
+                Issue newIssue = issueService.createNewIssue(client);
+                newIssue.setIssueCategory(issueCategoryService.getIssueCategoryByName(txt));
+                issueService.update(newIssue);
                 SendMessage sendMessage = new SendMessage()
                         .setChatId(update.getMessage().getChatId())
                         .setText("Опишите суть проблемы");
                 sendMsg(sendMessage);
             }
+        } else if (client.getIssues().stream().anyMatch(p -> IssueStatus.IN_PROCESS.equals(p.getStatus()))) {
+            client.getIssues().stream().filter(p -> IssueStatus.IN_PROCESS.equals(p.getStatus()))
+                    .findAny()
+                    .ifPresent(p -> {
+                        specialistApi.ask(p, txt);
+                        SendMessage sendMessage = new SendMessage()
+                                .setChatId(update.getMessage().getChatId())
+                                .setText("<i>Сообщение направлено сотруднику банка</i>").enableHtml(true);
+                        sendMsg(sendMessage);
+                    });
+
         } else if (ClientBotMenu.SOLVE_PROBLEM.getCode().equals(txt)) {
             SendMessage sendMessage = askWhatProblem(update);
             sendMsg(sendMessage);
         } else if (messageIsIssueDescription(client)) {
             Issue newIssue = clientService.getNewIssue(client);
-            newIssue.setDescription(update.getMessage().getText());
             issueService.update(newIssue);
             SendMessage sendMessage = new SendMessage()
                     .setChatId(update.getMessage().getChatId())
-                    .setText("Ваше обращение передано специалисту для первичного анализа, ожидайте ответ в течение 2 минут");
+                    .setText("Ваше обращение передано специалисту для первичного анализа");
+            specialistApi.ask(newIssue, update.getMessage().getText());
             sendMsg(sendMessage);
+        }
+    }
+
+    private void processCallback(Update update) {
+        if ("closeCurrentIssue".equals(update.getCallbackQuery().getData())) {
+            Client client = clientService.getByChatId(update.getCallbackQuery().getMessage().getChatId());
+            client.getIssues().stream().filter(p -> IssueStatus.IN_PROCESS.equals(p.getStatus()))
+                    .findAny()
+                    .ifPresent(p -> {
+                        specialistApi.close(p);
+                        SendMessage sendMessage = new SendMessage()
+                                .setChatId(update.getCallbackQuery().getMessage().getChatId())
+                                .setText("<i>Обращение закрыто</i>").enableHtml(true);
+                        sendMsg(sendMessage);
+                    });
         }
     }
 
@@ -157,9 +175,11 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
 
     @Override
     public void answer(Issue issue, String answer) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Поступил ответ по заявке: " + issue + ":\n\n" + answer);
-        }
+        SendMessage sendMessage = new SendMessage()
+                .setChatId(issue.getClient().getChatId())
+                .setText("<i>" + issue.getAssignee().getLastname() + " " + issue.getAssignee().getFirstname() + "</i>:\n" + answer).enableHtml(true)
+                .setReplyMarkup(KeyboardUtils.getInlineButton("closeCurrentIssue", "Закрыть обращение"));
+        sendMsg(sendMessage);
     }
 
     private void sendMsg(SendMessage sendMessage) {

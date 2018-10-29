@@ -17,13 +17,19 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.sbrf.hackaton.telegram.bot.client.ClientApi;
 import ru.sbrf.hackaton.telegram.bot.config.Config;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.HistoryMessageRepository;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.SpecialistService;
 import ru.sbrf.hackaton.telegram.bot.model.Issue;
+import ru.sbrf.hackaton.telegram.bot.model.IssueStatus;
 import ru.sbrf.hackaton.telegram.bot.model.Specialist;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
@@ -42,10 +48,16 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
     private ClientApi clientApi;
 
     @Autowired
+    private IssueService issueService;
+
+    @Autowired
     private SpecialistService specialistService;
 
     @Autowired
     private Config config;
+
+    @Autowired
+    private HistoryMessageRepository historyMessageRepository;
 
     @Override
     public String getBotUsername() {
@@ -170,7 +182,8 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
                 victim = specialists.get(random.nextInt(specialists.size()));
             }
             issue.setAssignee(victim);
-            //todo update issue
+            issue.setStatus(IssueStatus.IN_PROCESS);
+            issueService.update(issue);
             activeIssues.put(victim, issue);
             firstQuestion = true;
         }
@@ -182,6 +195,8 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
 
     @Override
     public void close(Issue issue) {
+        issue.setStatus(IssueStatus.COMPLETED);
+        issueService.update(issue);
         activeIssues.values().remove(issue);
     }
 
