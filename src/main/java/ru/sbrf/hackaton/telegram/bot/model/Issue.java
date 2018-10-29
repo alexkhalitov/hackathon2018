@@ -1,6 +1,8 @@
 package ru.sbrf.hackaton.telegram.bot.model;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Заявка
@@ -8,7 +10,8 @@ import javax.persistence.*;
 @Entity
 @Table(name="issues")
 public class Issue {
-
+    @OneToMany(fetch = FetchType.EAGER)
+    private List<HistoryMessage> historyMessages;
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
@@ -31,6 +34,18 @@ public class Issue {
     @Column(name="status")
     @Enumerated(value = EnumType.STRING)
     private IssueStatus status;
+
+    public Issue() {
+        historyMessages = new ArrayList<>();
+    }
+
+    public List<HistoryMessage> getHistoryMessages() {
+        return historyMessages;
+    }
+
+    public void setHistoryMessages(List<HistoryMessage> historyMessages) {
+        this.historyMessages = historyMessages;
+    }
 
     public IssueStatus getStatus() {
         return status;

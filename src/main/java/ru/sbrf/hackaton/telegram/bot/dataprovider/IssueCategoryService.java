@@ -41,8 +41,20 @@ public class IssueCategoryService {
 	public void deleteCategory(long id) {
 		issueCategoryRepository.delete(id);
 	}
-	
-	
+
+	/**
+	 * Найти категорию по имени
+	 *
+	 * @param name
+	 * @return
+	 */
+	public IssueCategory getIssueCategoryByName(String name) {
+		return getAllCategorys()
+				.stream()
+				.filter(p -> p.getName() != null && p.getName().toLowerCase().equals(name.toLowerCase()))
+				.findAny()
+				.orElseThrow(IllegalArgumentException::new);
+	}
 	/*public IssueCategory getCategory(long id) {
 		return categorys.stream().filter(t -> t.getId().equals(id)).findFirst().get();
 	}
