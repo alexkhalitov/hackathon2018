@@ -56,20 +56,26 @@ public class SentimentalService {
         return instances;
     }
 
-    public Sentiment getSentiment(final String message) throws Exception {
+    public Sentiment getSentiment(final String message) {
 
         final Instances instances = makeInstance(message);
 
         final Instance in = instances.instance(0);
 
-        final double[] ps = m_classifier.distributionForInstance(in);
-        SentimentalResult[] sentimentalResult = IntStream.range(0, ps.length)
-                .mapToObj(i -> new SentimentalResult(in.classAttribute().value(i), ps[i]))
-                .toArray(SentimentalResult[]::new);
-        LOGGER.debug(Arrays.toString(sentimentalResult));
-        OptionalDouble max = DoubleStream.of(ps).max();
-        int index = DoubleStream.of(ps).boxed().collect(toList()).indexOf(max.getAsDouble());
-        return Sentiment.valueOf(in.classAttribute().value(index).toUpperCase());
+        final double[] ps;
+        try {
+            ps = m_classifier.distributionForInstance(in);
+            SentimentalResult[] sentimentalResult = IntStream.range(0, ps.length)
+                    .mapToObj(i -> new SentimentalResult(in.classAttribute().value(i), ps[i]))
+                    .toArray(SentimentalResult[]::new);
+            LOGGER.debug(Arrays.toString(sentimentalResult));
+            OptionalDouble max = DoubleStream.of(ps).max();
+            int index = DoubleStream.of(ps).boxed().collect(toList()).indexOf(max.getAsDouble());
+            return Sentiment.valueOf(in.classAttribute().value(index).toUpperCase());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Sentiment.NEUTRAL;
+        }
     }
 
     public String getAlgorithm() {
