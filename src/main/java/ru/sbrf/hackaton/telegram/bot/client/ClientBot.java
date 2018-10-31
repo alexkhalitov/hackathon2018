@@ -14,6 +14,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
+import ru.sbrf.hackaton.telegram.bot.ai.SentimentalService;
 import ru.sbrf.hackaton.telegram.bot.config.Config;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.ClientService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.HistoryMessageRepository;
@@ -46,6 +47,8 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
     private SpecialistApi specialistApi;
     @Autowired
     private HistoryMessageRepository historyMessageRepository;
+    @Autowired
+    private SentimentalService sentimentalService;
 
     private static SendMessage sayHello(Long chatId) {
         SendMessage sendMessage = new SendMessage()
