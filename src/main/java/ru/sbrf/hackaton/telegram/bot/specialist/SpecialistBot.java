@@ -18,8 +18,11 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.sbrf.hackaton.telegram.bot.client.ClientApi;
 import ru.sbrf.hackaton.telegram.bot.config.Config;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.HistoryMessageRepository;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.SpecialistService;
 import ru.sbrf.hackaton.telegram.bot.model.Issue;
+import ru.sbrf.hackaton.telegram.bot.model.IssueStatus;
 import ru.sbrf.hackaton.telegram.bot.model.Specialist;
 
 import javax.annotation.PostConstruct;
@@ -47,6 +50,9 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
 
     @Autowired
     private Config config;
+
+    @Autowired
+    private HistoryMessageRepository historyMessageRepository;
 
     @Override
     public String getBotUsername() {
@@ -179,6 +185,7 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
                     throw new RejectedExecutionException("Извините, все специалисты заняты");
                 }
                 issue.setAssignee(victim);
+                issue.setStatus(IssueStatus.IN_PROCESS);
                 issueService.update(issue);
                 activeIssues.put(victim, issue);
             }
@@ -192,6 +199,8 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
 
     @Override
     public void close(Issue issue) {
+        issue.setStatus(IssueStatus.COMPLETED);
+        issueService.update(issue);
         activeIssues.values().remove(issue);
     }
 
