@@ -21,7 +21,7 @@ public class BankRuPageParser3 {
     private final static Pattern TEXT_PATTERN = Pattern.compile("<div class=\"article-text response-page__text markup-inside-small markup-inside-small--bullet\" itemprop=\"description\" data-test=\"responses-message\">");
 
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         try (BufferedReader reader = new BufferedReader(new FileReader(urlFile))) {
             try (CloseableHttpClient client = HttpClients.createDefault()) {
                 String url;

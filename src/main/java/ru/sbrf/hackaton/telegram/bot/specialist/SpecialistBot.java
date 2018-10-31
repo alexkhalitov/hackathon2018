@@ -50,7 +50,6 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
 
     @Autowired
     private Config config;
-
     @Autowired
     private HistoryMessageRepository historyMessageRepository;
 

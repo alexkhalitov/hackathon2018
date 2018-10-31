@@ -19,7 +19,7 @@ public class BankRuURLParser {
 
     private static final Pattern URL_PATTERN = Pattern.compile("\"header-h3\"(.)*href=\"(.+)\"");
 
-    public static void main(String[] args) throws Exception {
+    public static void main1(String[] args) throws Exception {
         try (PrintWriter writer = new PrintWriter(new BufferedWriter(new FileWriter(OUT_FILE)))) {
             try (CloseableHttpClient client = HttpClients.createDefault()) {
                 for (int i = 1; i < PAGES; i++) {
