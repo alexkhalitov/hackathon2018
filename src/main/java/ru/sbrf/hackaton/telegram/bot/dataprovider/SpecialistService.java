@@ -53,4 +53,14 @@ public class SpecialistService {
         }
         return null;
     }
+
+    public List<Specialist> getWithChatId() {
+	    List<Specialist> specialists = new ArrayList<>();
+        for(Specialist specialist : specialistRepository.findAll()) {
+            if(specialist.getChatId() != null) {
+                specialists.add(specialist);
+            }
+        }
+        return specialists;
+    }
 }
