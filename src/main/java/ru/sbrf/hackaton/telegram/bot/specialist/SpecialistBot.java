@@ -98,13 +98,17 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
             Long issueId = Long.parseLong(update.getCallbackQuery().getData().substring("closeIssue".length()));
             Optional.ofNullable(activeIssues.get(specialist)).filter(iss -> !iss.isEmpty())
                     .map(iss -> iss.stream().filter(is -> is.getId().equals(issueId)).findAny().orElse(null))
-            .ifPresent(issue1 -> clientApi.closeIssue(issue1));
+            .ifPresent(issue1 -> {
+                clientApi.closeIssue(issue1);
+                sendMsg(new SendMessage(update.getCallbackQuery().getMessage().getChatId(), "Отправлен запрос на закрытие заявки №"+issue1.getId()));
+
+            });
         }else if(update.getCallbackQuery().getData().startsWith("inProgress")) {
             Long issueId = Long.parseLong(update.getCallbackQuery().getData().substring("inProgress".length()));
             Optional.ofNullable(activeIssues.get(specialist)).filter(iss -> !iss.isEmpty())
                     .ifPresent(iss -> iss.stream().filter(is -> is.getId().equals(issueId)).findAny().ifPresent(is -> {
                         iss.active = is;
-                        sendMsg(new SendMessage(update.getCallbackQuery().getMessage().getChatId(), "Запрос №"+is.getId()+" взят в работу"));
+                        sendMsg(new SendMessage(update.getCallbackQuery().getMessage().getChatId(), "Заявка №"+is.getId()+" взята в работу"));
                     }));
         }
     }
