@@ -86,7 +86,7 @@ public class AskSpecialistWithGeopositionSendingHandler implements CategoryHandl
                         issue.setGeoPosition(geoPosition);
                     }
                     issueService.add(issue);
-                    specialistApi.ask(issue, skolzko.message);
+                    specialistApi.ask(issue, skolzko.message, null);
                     client.getIssues().add(issue);
                     clientService.update(client);
                     clientBot.execute(new SendSticker()

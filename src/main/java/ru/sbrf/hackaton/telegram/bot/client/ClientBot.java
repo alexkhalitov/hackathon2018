@@ -9,12 +9,14 @@ import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
+import ru.sbrf.hackaton.telegram.bot.BotUtils;
 import ru.sbrf.hackaton.telegram.bot.ai.SentimentalService;
 import ru.sbrf.hackaton.telegram.bot.client.handler.cashpoint.DontWorkHandler;
 import ru.sbrf.hackaton.telegram.bot.client.handler.SelfAnsweredCategoryHandler;
@@ -28,8 +30,11 @@ import ru.sbrf.hackaton.telegram.bot.specialist.SpecialistApi;
 import ru.sbrf.hackaton.telegram.bot.telegramUtils.KeyboardUtils;
 
 import javax.annotation.PostConstruct;
+import java.io.ByteArrayInputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static ru.sbrf.hackaton.telegram.bot.BotUtils.getPhoto;
 
 @Service
 public class ClientBot extends TelegramLongPollingBot implements ClientApi {
@@ -121,8 +126,10 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         } else if (handler != null) {
             if (!handler.update(update)) {
                 categoryHandlerMap.remove(chatId);
-                SendMessage sendMessage = sayHello(chatId, "Я могу ещё чем-нибудь помочь?");
-                sendMsg(sendMessage);
+                if(client.getIssues().stream().noneMatch(p -> IssueStatus.IN_PROCESS.equals(p.getStatus()))) {
+                    SendMessage sendMessage = sayHello(chatId, "Я могу ещё чем-нибудь помочь?");
+                    sendMsg(sendMessage);
+                }
             }
         }
 //        else if (messageIsIssueCategory(txt)) {
@@ -144,7 +151,11 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
             client.getIssues().stream().filter(p -> IssueStatus.IN_PROCESS.equals(p.getStatus()))
                     .findAny()
                     .ifPresent(p -> {
-                        specialistApi.ask(p, txt);
+                        String photo = null;
+                        if(update.getMessage().getPhoto() != null) {
+                            photo = BotUtils.getPhotoUrl(this, update.getMessage().getPhoto().get(update.getMessage().getPhoto().size() - 1));
+                        }
+                        specialistApi.ask(p, txt, photo);
                         SendMessage sendMessage = new SendMessage()
                                 .setChatId(chatId)
                                 .setText("<i>Сообщение направлено сотруднику банка</i>").enableHtml(true);
@@ -167,7 +178,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                             categoryHandlerMap.put(chatId, handler1);
                             if (!handler1.update(update)) {
                                 categoryHandlerMap.remove(chatId);
-                                takeASleep(3000L);
+                                takeASleep();
                                 sendMessage = sayHello(chatId, "Я могу еще чем-нибудь помочь?");
                                 sendMsg(sendMessage);
                             }
@@ -180,7 +191,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
             SendMessage sendMessage = new SendMessage()
                     .setChatId(chatId)
                     .setText("Ваше обращение передано специалисту для первичного анализа");
-            specialistApi.ask(newIssue, update.getMessage().getText());
+            specialistApi.ask(newIssue, update.getMessage().getText(), null);
             sendMsg(sendMessage);
         } else if (ClientBotMenu.IDEA.getCode().equals(txt)
                 || suggestIdeaSet.contains(update.getMessage().getChatId())) {
@@ -188,7 +199,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                 suggestIdeaSet.add(update.getMessage().getChatId());
                 if (!suggestIdeas.update(update, this)) {
                     suggestIdeaSet.remove(update.getMessage().getChatId());
-                    takeASleep(3000L);
+                    takeASleep();
                     SendMessage sendMessage = sayHello(update.getMessage().getChatId(), "Чем могу быть полезен?");
                     sendMsg(sendMessage);
                 }
@@ -218,9 +229,9 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         }
     }
 
-    private void takeASleep(long millis) {
+    private void takeASleep() {
         try {
-            Thread.sleep(millis);
+            Thread.sleep(3000L);
         } catch (InterruptedException ignored) {
         }
     }
@@ -235,6 +246,9 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                         SendMessage sendMessage = new SendMessage()
                                 .setChatId(update.getCallbackQuery().getMessage().getChatId())
                                 .setText("<i>Обращение закрыто</i>").enableHtml(true);
+                        sendMsg(sendMessage);
+                        takeASleep();
+                        sendMessage = sayHello(update.getCallbackQuery().getMessage().getChatId(), "Я могу ещё чем-нибудь помочь?");
                         sendMsg(sendMessage);
                     });
         } else if ("mainMenu".equals(update.getCallbackQuery().getData())) {
@@ -294,11 +308,26 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
     }
 
     @Override
-    public void answer(Issue issue, String answer) {
-        SendMessage sendMessage = new SendMessage()
-                .setChatId(issue.getClient().getChatId())
-                .setText("<i>" + issue.getAssignee().getLastname() + " " + issue.getAssignee().getFirstname() + "</i>:\n" + answer).enableHtml(true);
-        sendMsg(sendMessage);
+    public void answer(Issue issue, String answer, String photo) {
+        if(answer != null) {
+            SendMessage sendMessage = new SendMessage()
+                    .setChatId(issue.getClient().getChatId())
+                    .setText("<i>" + issue.getAssignee().getLastname() + " " + issue.getAssignee().getFirstname() + "</i>:\n" + answer).enableHtml(true);
+            sendMsg(sendMessage);
+        }
+
+        if(photo != null) {
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(getPhoto(photo));
+            sendPhoto(new SendPhoto().setPhoto("Фото", inputStream).setChatId(issue.getClient().getChatId()));
+        }
+    }
+
+    private void sendPhoto(SendPhoto sendMessage) {
+        try {
+            this.execute(sendMessage);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     @Override
