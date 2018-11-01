@@ -5,6 +5,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import ru.sbrf.hackaton.telegram.bot.client.ClientBot;
 import ru.sbrf.hackaton.telegram.bot.client.ClientBotMenu;
 
 import java.util.ArrayList;
@@ -37,16 +38,15 @@ public class KeyboardUtils {
         List<KeyboardRow> keyboard = new ArrayList<>();
 
         // first keyboard line
-        KeyboardRow keyboardFirstRow = new KeyboardRow();
-        KeyboardButton findCashPointkeyboardButton = new KeyboardButton();
-        findCashPointkeyboardButton.setText(ClientBotMenu.FIND_CASHPOINT.getCode()).setRequestLocation(true);
-        KeyboardButton solveProblemKeyboardButton = new KeyboardButton();
-        solveProblemKeyboardButton.setText(ClientBotMenu.SOLVE_PROBLEM.getCode());
-        keyboardFirstRow.add(findCashPointkeyboardButton);
-        keyboardFirstRow.add(solveProblemKeyboardButton);
 
-        // add array to list
-        keyboard.add(keyboardFirstRow);
+        for (ClientBotMenu menuPoint : ClientBotMenu.values()) {
+            KeyboardRow keyboardFirstRow = new KeyboardRow();
+            KeyboardButton newKeyboardButton = new KeyboardButton();
+            newKeyboardButton.setText(menuPoint.getCode());
+            keyboardFirstRow.add(newKeyboardButton);
+            keyboard.add(keyboardFirstRow);
+        }
+
 
         // add list to our keyboard
         replyKeyboardMarkup.setKeyboard(keyboard);

@@ -108,7 +108,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                         sendMsg(sendMessage);
                     });
 
-        } else if (ClientBotMenu.SOLVE_PROBLEM.getCode().equals(txt)) {
+        } else if (ClientBotMenu.FORM_COMPLAINT.getCode().equals(txt)) {
             SendMessage sendMessage = askWhatProblem(update);
             sendMsg(sendMessage);
         } else if (messageIsIssueDescription(client)) {

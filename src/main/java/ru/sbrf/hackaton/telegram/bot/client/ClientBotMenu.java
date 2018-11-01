@@ -2,8 +2,9 @@ package ru.sbrf.hackaton.telegram.bot.client;
 
 public enum ClientBotMenu {
     START("/start"),
-    SOLVE_PROBLEM("Решить проблему"),
-    FIND_CASHPOINT("Найти банкомат");
+    FORM_COMPLAINT("Оформить жалобу"),
+    IDEA("Предложить идею"),
+    SAY_SPASIBO("Сказать спасибо");
 
     private final String code;
 
