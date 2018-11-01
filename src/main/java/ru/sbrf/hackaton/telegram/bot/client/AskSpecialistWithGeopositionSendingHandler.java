@@ -10,13 +10,14 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMar
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import ru.sbrf.hackaton.telegram.bot.ai.SentimentalService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.ClientService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.GeoPositionService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
-import ru.sbrf.hackaton.telegram.bot.dataprovider.SpecialistService;
 import ru.sbrf.hackaton.telegram.bot.model.Client;
 import ru.sbrf.hackaton.telegram.bot.model.GeoPosition;
 import ru.sbrf.hackaton.telegram.bot.model.Issue;
+import ru.sbrf.hackaton.telegram.bot.model.Sentiment;
 import ru.sbrf.hackaton.telegram.bot.specialist.SpecialistApi;
 
 import java.util.ArrayList;
@@ -26,10 +27,11 @@ import java.util.Map;
 
 
 public class AskSpecialistWithGeopositionSendingHandler implements CategoryHandler{
-    private GeoPositionService geoPositionService;
-    private ClientService clientService;
-    private IssueService issueService;
-    private SpecialistApi specialistApi;
+    private final GeoPositionService geoPositionService;
+    private final ClientService clientService;
+    private final IssueService issueService;
+    private final SpecialistApi specialistApi;
+    private final SentimentalService sentimentalService;
 
     private final ClientBot clientBot;
     private final long chatId;
@@ -37,13 +39,18 @@ public class AskSpecialistWithGeopositionSendingHandler implements CategoryHandl
     private static final Logger LOGGER = LoggerFactory.getLogger(AskSpecialistWithGeopositionSendingHandler.class);
     private final Map<Long, Skolzko> states = new HashMap<>();
 
-    AskSpecialistWithGeopositionSendingHandler(ClientBot clientBot, long chatId, GeoPositionService geoPositionService, ClientService clientService, IssueService issueService, SpecialistApi specialistApi) {
+    AskSpecialistWithGeopositionSendingHandler(ClientBot clientBot, long chatId,
+                                               GeoPositionService geoPositionService,
+                                               ClientService clientService,
+                                               IssueService issueService,
+                                               SpecialistApi specialistApi, SentimentalService sentimentalService) {
         this.clientBot = clientBot;
         this.chatId = chatId;
         this.geoPositionService = geoPositionService;
         this.clientService = clientService;
         this.issueService = issueService;
         this.specialistApi = specialistApi;
+        this.sentimentalService = sentimentalService;
     }
     synchronized public boolean update(Update update)  {
         try {
@@ -52,7 +59,7 @@ public class AskSpecialistWithGeopositionSendingHandler implements CategoryHandl
                 clientBot.execute(new SendMessage(chatId, "Пожалуйста, опишите суть проблемы")
                         .setReplyMarkup(new ReplyKeyboardRemove()));
                 skolzko = new Skolzko();
-                skolzko.state = AskSpecialistWithGeopositionSendingHandler.State.ASK_TEXT;
+                skolzko.state = State.ASK_TEXT;
                 states.put(chatId, skolzko);
                 return true;
             }
@@ -61,12 +68,13 @@ public class AskSpecialistWithGeopositionSendingHandler implements CategoryHandl
                     //clientBot.execute(new SendSticker().setChatId(chatId).setSticker("CAADAgADoAQAAulVBRgYWAbVG2ThQgI"));
                     clientBot.execute(createLocationRequest(chatId));
                     skolzko.message = update.getMessage().getText();
-                    skolzko.state = AskSpecialistWithGeopositionSendingHandler.State.ASK_GEOPOSITION;
+                    skolzko.sentiment = sentimentalService.getSentiment(skolzko.message);
+                    skolzko.state = State.ASK_GEOPOSITION;
                     return true;
-
                 case ASK_GEOPOSITION:
                     Issue issue = new Issue();
                     Client client = clientService.getByChatId(chatId);
+                    issue.setSentiment(skolzko.sentiment);
                     issue.setClient(client);
                     issue.setDescription(skolzko.message);
                     Location location = update.getMessage().getLocation();
@@ -153,6 +161,7 @@ public class AskSpecialistWithGeopositionSendingHandler implements CategoryHandl
         private String chatId;
         private String message;
         private State state = State.NEW;
+        private Sentiment sentiment = Sentiment.NEUTRAL;
     }
 
     private enum State {

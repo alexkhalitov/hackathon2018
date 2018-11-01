@@ -35,6 +35,18 @@ public class Issue {
     @Enumerated(value = EnumType.STRING)
     private IssueStatus status;
 
+    @Column(name="sentiment")
+    @Enumerated(value = EnumType.STRING)
+    private Sentiment sentiment;
+
+    public Sentiment getSentiment() {
+        return sentiment;
+    }
+
+    public void setSentiment(Sentiment sentiment) {
+        this.sentiment = sentiment;
+    }
+
     public Issue() {
         historyMessages = new ArrayList<>();
     }

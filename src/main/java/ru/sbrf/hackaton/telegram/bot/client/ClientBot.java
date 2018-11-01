@@ -99,11 +99,11 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
             if (name.equals("Не работает")) {
                 return new DontWorkHandler(this, chatId, cashPointService);
             }else if(name.equals("Другое")) {
-                return new AskSpecialistWithGeopositionSendingHandler(this, chatId, geoPositionService, clientService, issueService, specialistApi);
+                return new AskSpecialistWithGeopositionSendingHandler(this, chatId, geoPositionService, clientService, issueService, specialistApi, sentimentalService);
             }
         } else if (category.getName().equals("Проблема в помещении")) {
             //депенденси инджекшон
-            return new AskSpecialistWithGeopositionSendingHandler(this, chatId, geoPositionService, clientService, issueService, specialistApi);
+            return new AskSpecialistWithGeopositionSendingHandler(this, chatId, geoPositionService, clientService, issueService, specialistApi, sentimentalService);
         }
         return null; //todo
     }

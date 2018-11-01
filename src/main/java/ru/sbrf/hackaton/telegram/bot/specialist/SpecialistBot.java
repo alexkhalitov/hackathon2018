@@ -21,10 +21,7 @@ import ru.sbrf.hackaton.telegram.bot.config.Config;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.HistoryMessageRepository;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.SpecialistService;
-import ru.sbrf.hackaton.telegram.bot.model.Client;
-import ru.sbrf.hackaton.telegram.bot.model.Issue;
-import ru.sbrf.hackaton.telegram.bot.model.IssueStatus;
-import ru.sbrf.hackaton.telegram.bot.model.Specialist;
+import ru.sbrf.hackaton.telegram.bot.model.*;
 import ru.sbrf.hackaton.telegram.bot.telegramUtils.KeyboardUtils;
 
 import javax.annotation.PostConstruct;
@@ -219,7 +216,11 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
             }
             firstQuestion = true;
         }
-        sendMsg(new SendMessage(victim.getChatId(), "<i>Поступил сообщение по заявке №:"+issue.getId()+'\n'+question+"</i>").enableHtml(true));
+        String critical = "";
+        if(issue.getSentiment() == Sentiment.BAD) {
+            critical = "<b>\u203c\ufe0f Важность: критическая</b>\n";
+        }
+        sendMsg(new SendMessage(victim.getChatId(), critical+ "<i>Поступил сообщение по заявке №"+issue.getId()+":</i>\n"+question).enableHtml(true));
         if(firstQuestion) {
             clientApi.answer(issue, "Ваш запрос взят в работу. Пожалуйста, ожидайте ответа");
         }
