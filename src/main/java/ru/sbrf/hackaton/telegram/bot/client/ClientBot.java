@@ -103,7 +103,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         }else if(handler != null) {
             if(!handler.update(update)) {
                 categoryHandlerMap.remove(chatId);
-                SendMessage sendMessage = sayHello(chatId, "Хорошо. Я могу еще чем-нибудь помочь?");
+                SendMessage sendMessage = sayHello(chatId, "Я могу еще чем-нибудь помочь?");
                 sendMsg(sendMessage);
             }
         }
@@ -149,7 +149,8 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                             categoryHandlerMap.put(chatId, handler1);
                             if(!handler1.update(update)) {
                                 categoryHandlerMap.remove(chatId);
-                                sendMessage = sayHello(chatId, "Хорошо. Я могу еще чем-нибудь помочь?");
+                                takeASleep(3000L);
+                                sendMessage = sayHello(chatId, "Я могу еще чем-нибудь помочь?");
                                 sendMsg(sendMessage);
                             }
                         }
@@ -173,6 +174,13 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                     sendMsg(sendMessage);
                 }
             }
+        }
+    }
+
+    private void takeASleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException ignored) {
         }
     }
 
