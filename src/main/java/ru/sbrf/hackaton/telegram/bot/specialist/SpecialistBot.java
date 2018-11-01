@@ -46,7 +46,7 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SpecialistBot.class);
 
-    private final Map<Specialist, Issue> activeIssues = new ConcurrentHashMap<>();
+    private final Map<Specialist, Issues> activeIssues = new ConcurrentHashMap<>();
 
     private final Map<Long, Specialist> specialists = new HashMap<>();
 
@@ -93,12 +93,19 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
     }
 
     private void processCallback(Update update) {
-        if ("closeIssue".equals(update.getCallbackQuery().getData())) {
-            Specialist specialist = specialistService.getByChatId(update.getCallbackQuery().getMessage().getChatId());
-            Issue issue = activeIssues.get(specialist);
-            if(issue != null) {
-                clientApi.closeIssue(issue);
-            }
+        Specialist specialist = specialistService.getByChatId(update.getCallbackQuery().getMessage().getChatId());
+        if (update.getCallbackQuery().getData().startsWith("closeIssue")) {
+            Long issueId = Long.parseLong(update.getCallbackQuery().getData().substring("closeIssue".length()));
+            Optional.ofNullable(activeIssues.get(specialist)).filter(iss -> !iss.isEmpty())
+                    .map(iss -> iss.stream().filter(is -> is.getId().equals(issueId)).findAny().orElse(null))
+            .ifPresent(issue1 -> clientApi.closeIssue(issue1));
+        }else if(update.getCallbackQuery().getData().startsWith("inProgress")) {
+            Long issueId = Long.parseLong(update.getCallbackQuery().getData().substring("inProgress".length()));
+            Optional.ofNullable(activeIssues.get(specialist)).filter(iss -> !iss.isEmpty())
+                    .ifPresent(iss -> iss.stream().filter(is -> is.getId().equals(issueId)).findAny().ifPresent(is -> {
+                        iss.active = is;
+                        sendMsg(new SendMessage(update.getCallbackQuery().getMessage().getChatId(), "Запрос №"+is.getId()+" взят в работу"));
+                    }));
         }
     }
 
@@ -132,7 +139,7 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
                 sendMsg(createContactRequest(chatId));
                 return;
             }
-            Issue issue = activeIssues.get(specialist);
+            Issue issue = Optional.ofNullable(activeIssues.get(specialist)).map(issues -> issues.active).orElse(null);
             if(issue != null) {
                 String photo = null;
                 if(update.getMessage().getPhoto() != null) {
@@ -140,10 +147,9 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
                 }
                 clientApi.answer(issue, txt, photo);
                 sendMsg(new SendMessage(chatId, "<i>Сообщение отправлено клиенту</i>").enableHtml(true)
-                        .setReplyMarkup(KeyboardUtils.getInlineButton("closeIssue", "Отправить запрос на закрытие")));
+                        .setReplyMarkup(KeyboardUtils.getInlineButton("closeIssue"+issue.getId(), "Отправить запрос на закрытие")));
             }else {
                 sendMsg(new SendMessage(chatId, "<i>В данный момент у вас нет активной заявки</i>").enableHtml(true));
-
             }
         }
     }
@@ -222,19 +228,14 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
         boolean firstQuestion = false;
         if(victim == null) {
             synchronized (specialists) {
-                for(Specialist specialist : specialists.values()) {
-                    if(activeIssues.get(specialist) == null) {
-                        victim = specialist;
-                        break;
-                    }
-                }
-                if(victim == null) {
+                victim = new ArrayList<>(specialists.values()).get(new Random().nextInt(specialists.size()));
+                                if(victim == null) {
                     throw new RejectedExecutionException("Извините, все специалисты заняты");
                 }
                 issue.setAssignee(victim);
                 issue.setStatus(IssueStatus.IN_PROCESS);
                 issueService.update(issue);
-                activeIssues.put(victim, issue);
+                activeIssues.computeIfAbsent(victim, specialist -> new Issues()).add(issue);
             }
             firstQuestion = true;
         }
@@ -243,10 +244,15 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
             if (issue.getSentiment() == Sentiment.BAD) {
                 critical = "<b>\u203c\ufe0f Важность: критическая</b>\n";
             }
-            sendMsg(new SendMessage(victim.getChatId(), critical + "<i>Поступил сообщение по заявке №" + issue.getId() + ":</i>\n" + question).enableHtml(true));
+            SendMessage sendMessage = new SendMessage(victim.getChatId(), critical + "<i>Поступил сообщение по заявке №" + issue.getId() + ":</i>\n" + question).enableHtml(true);
+            if(firstQuestion) {
+                sendMessage.setReplyMarkup(KeyboardUtils.getInlineButton("inProgress"+issue.getId(), "Взять в работу"));
+            }
+            sendMsg(sendMessage);
         }
         if(photo != null) {
             ByteArrayInputStream inputStream = new ByteArrayInputStream(getPhoto(photo));
+            sendMsg(new SendMessage(victim.getChatId(), critical + "<i>Поступило изображение по заявке №" + issue.getId() + ":</i>").enableHtml(true));
             sendPhoto(new SendPhoto().setPhoto("Фото", inputStream).setChatId(victim.getChatId()));
         }
         if(firstQuestion) {
@@ -262,13 +268,29 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
                 .setChatId(issue.getClient().getChatId())
                 .setText("Клиент подтвердил закрытие обращения");
         sendMsg(sendMessage);
-        Iterator<Issue> iterator = activeIssues.values().iterator();
-        while(iterator.hasNext()) {
-            if(iterator.next().getId().equals(issue.getId())) {
-                iterator.remove();
-                break;
+        Iterator<Issues> issuesIterator = activeIssues.values().iterator();
+        while(issuesIterator.hasNext()) {
+            Issues issues = issuesIterator.next();
+            if(issues.active.getId().equals(issue.getId())) {
+                issues.active = null;
+            }
+            Iterator<Issue> issueIterator = issues.iterator();
+            while (issueIterator.hasNext()) {
+                if (issueIterator.next().getId().equals(issue.getId())) {
+                    issueIterator.remove();
+                    break;
+                }
+            }
+            if(issues.isEmpty()) {
+                issuesIterator.remove();
             }
         }
+    }
+
+    private static class Issues extends ArrayList<Issue> {
+
+        private Issue active;
+
     }
 
 }
