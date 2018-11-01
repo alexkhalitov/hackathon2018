@@ -16,6 +16,7 @@ import ru.sbrf.hackaton.telegram.bot.dataprovider.ClientService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.GeoPositionService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.SpecialistService;
+import ru.sbrf.hackaton.telegram.bot.model.Client;
 import ru.sbrf.hackaton.telegram.bot.model.GeoPosition;
 import ru.sbrf.hackaton.telegram.bot.model.Issue;
 import ru.sbrf.hackaton.telegram.bot.specialist.SpecialistApi;
@@ -51,7 +52,7 @@ public class SkolzkoHandler implements CategoryHandler{
             long chatId = update.getMessage().getChatId();
             Skolzko skolzko = states.get(chatId);
             if (skolzko == null) {
-                clientBot.execute(new SendMessage(chatId, "Пожалуйста, напишите Ваш отзыв")
+                clientBot.execute(new SendMessage(chatId, "Пожалуйста, опишите суть проблемы")
                         .setReplyMarkup(new ReplyKeyboardRemove()));
                 skolzko = new Skolzko();
                 skolzko.state = SkolzkoHandler.State.ASK_TEXT;
@@ -68,7 +69,8 @@ public class SkolzkoHandler implements CategoryHandler{
 
                 case ASK_GEOPOSITION:
                     Issue issue = new Issue();
-                    issue.setClient(clientService.getByChatId(chatId));
+                    Client client = clientService.getByChatId(chatId);
+                    issue.setClient(client);
                     issue.setDescription(skolzko.message);
                     Location location = update.getMessage().getLocation();
                     if (location != null) {
@@ -80,6 +82,8 @@ public class SkolzkoHandler implements CategoryHandler{
                     }
                     issueService.add(issue);
                     specialistApi.ask(issue, skolzko.message);
+                    client.getIssues().add(issue);
+                    clientService.update(client);
                     clientBot.execute(new SendSticker()
                             .setReplyMarkup(new ReplyKeyboardRemove())
                             .setChatId(chatId).setSticker("CAADAgADmQQAAulVBRi8-VqIiMu2WAI"));

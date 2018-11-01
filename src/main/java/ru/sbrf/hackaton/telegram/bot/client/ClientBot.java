@@ -269,8 +269,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
     public void answer(Issue issue, String answer) {
         SendMessage sendMessage = new SendMessage()
                 .setChatId(issue.getClient().getChatId())
-                .setText("<i>" + issue.getAssignee().getLastname() + " " + issue.getAssignee().getFirstname() + "</i>:\n" + answer).enableHtml(true)
-                .setReplyMarkup(KeyboardUtils.getInlineButton("closeCurrentIssue", "Закрыть обращение"));
+                .setText("<i>" + issue.getAssignee().getLastname() + " " + issue.getAssignee().getFirstname() + "</i>:\n" + answer).enableHtml(true);
         sendMsg(sendMessage);
     }
 

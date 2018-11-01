@@ -20,11 +20,12 @@ import ru.sbrf.hackaton.telegram.bot.client.ClientApi;
 import ru.sbrf.hackaton.telegram.bot.config.Config;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.HistoryMessageRepository;
-import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.SpecialistService;
+import ru.sbrf.hackaton.telegram.bot.model.Client;
 import ru.sbrf.hackaton.telegram.bot.model.Issue;
 import ru.sbrf.hackaton.telegram.bot.model.IssueStatus;
 import ru.sbrf.hackaton.telegram.bot.model.Specialist;
+import ru.sbrf.hackaton.telegram.bot.telegramUtils.KeyboardUtils;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -77,6 +78,24 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
 
     @Override
     public void onUpdateReceived(Update update) {
+        if (update.hasCallbackQuery()) {
+            processCallback(update);
+        } else if (update.hasMessage()) {
+            processMessage(update);
+        }
+    }
+
+    private void processCallback(Update update) {
+        if ("closeIssue".equals(update.getCallbackQuery().getData())) {
+            Specialist specialist = specialistService.getByChatId(update.getCallbackQuery().getMessage().getChatId());
+            Issue issue = activeIssues.get(specialist);
+            if(issue != null) {
+                clientApi.closeIssue(issue);
+            }
+        }
+    }
+
+    private void processMessage(Update update) {
         Message msg = update.getMessage();
         String txt = msg.getText();
         if ("/start".equals(txt)) {
@@ -109,7 +128,8 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
             Issue issue = activeIssues.get(specialist);
             if(issue != null) {
                 clientApi.answer(issue, txt);
-                sendMsg(new SendMessage(chatId, "<i>Сообщение отправлено клиенту</i>").enableHtml(true));
+                sendMsg(new SendMessage(chatId, "<i>Сообщение отправлено клиенту</i>").enableHtml(true)
+                        .setReplyMarkup(KeyboardUtils.getInlineButton("closeIssue", "Отправить запрос на закрытие")));
             }else {
                 sendMsg(new SendMessage(chatId, "<i>В данный момент у вас нет активной заявки</i>").enableHtml(true));
 
@@ -209,6 +229,10 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
     public void close(Issue issue) {
         issue.setStatus(IssueStatus.COMPLETED);
         issueService.update(issue);
+        SendMessage sendMessage = new SendMessage()
+                .setChatId(issue.getClient().getChatId())
+                .setText("Клиент подтвердил закрытие обращения");
+        sendMsg(sendMessage);
         activeIssues.values().remove(issue);
     }
 
