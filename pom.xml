@@ -56,8 +56,21 @@
             <artifactId>commons-beanutils</artifactId>
         </dependency>
 
-
-
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-speech</artifactId>
+            <version>0.61.0-beta</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-storage</artifactId>
+            <version>1.48.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.tagtraum</groupId>
+            <artifactId>mfsampledsp</artifactId>
+            <version>0.9.11</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
@@ -104,7 +117,6 @@
         </dependency>
 
     </dependencies>
-
 
     <dependencyManagement>
         <dependencies>
