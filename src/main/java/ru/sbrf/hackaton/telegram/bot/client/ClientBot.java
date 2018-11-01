@@ -29,7 +29,9 @@ import ru.sbrf.hackaton.telegram.bot.telegramUtils.KeyboardUtils;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class ClientBot extends TelegramLongPollingBot implements ClientApi {
@@ -50,10 +52,15 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
     @Autowired
     private SentimentalService sentimentalService;
 
-    private static SendMessage sayHello(Long chatId) {
+    @Autowired
+    private SayThanks sayThanks;
+
+    private final Set<Long> sayThanksSet = new HashSet<>();
+
+    private static SendMessage sayHello(Long chatId, String txt) {
         SendMessage sendMessage = new SendMessage()
                 .setChatId(chatId)
-                .setText("Привет! Я сбербанк-бот, чем я могу вам помочь?");
+                .setText(txt != null ? txt :"Привет! Я сбербанк-бот, чем я могу вам помочь?");
         sendMessage.setReplyMarkup(KeyboardUtils.getReplyKeyboardMarkup());
         return sendMessage;
     }
@@ -80,7 +87,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         Client client = clientService.getByChatId(update.getMessage().getChatId());
 
         if (ClientBotMenu.START.getCode().equals(txt)) {
-            SendMessage sendMessage = sayHello(update.getMessage().getChatId());
+            SendMessage sendMessage = sayHello(update.getMessage().getChatId(), null);
             sendMsg(sendMessage);
 
         } else if (messageIsIssueCategory(txt)) {
@@ -119,6 +126,16 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                     .setText("Ваше обращение передано специалисту для первичного анализа");
             specialistApi.ask(newIssue, update.getMessage().getText());
             sendMsg(sendMessage);
+        } else if (ClientBotMenu.SAY_SPASIBO.getCode().equals(txt)
+                || sayThanksSet.contains(update.getMessage().getChatId())) {
+            synchronized (sayThanksSet) {
+                sayThanksSet.add(update.getMessage().getChatId());
+                if (!sayThanks.update(update, this)) {
+                    sayThanksSet.remove(update.getMessage().getChatId());
+                    SendMessage sendMessage = sayHello(update.getMessage().getChatId(), "Спасибо! Я могу еще чем-нибудь помочь?");
+                    sendMsg(sendMessage);
+                }
+            }
         }
     }
 

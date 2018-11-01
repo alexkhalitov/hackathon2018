@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.objects.Contact;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
@@ -111,8 +112,8 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
                 sendMsg(new SendMessage(chatId, "<i>Сообщение отправлено клиенту</i>").enableHtml(true));
             }else {
                 sendMsg(new SendMessage(chatId, "<i>В данный момент у вас нет активной заявки</i>").enableHtml(true));
-            }
 
+            }
         }
     }
 
@@ -131,6 +132,14 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
     }
 
     private void sendMsg(SendMessage sendMessage) {
+        try {
+            this.execute(sendMessage);
+        } catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private void sendMsg(SendSticker sendMessage) {
         try {
             this.execute(sendMessage);
         } catch (Exception e){
