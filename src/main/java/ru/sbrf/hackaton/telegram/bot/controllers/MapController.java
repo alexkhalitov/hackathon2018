@@ -44,9 +44,10 @@ public class MapController {
             MapDataDTO mapDataDTO = new MapDataDTO();
             mapDataDTO.setLatitude(thanks.getPosition().getLatitude());
             mapDataDTO.setLongitude(thanks.getPosition().getLongitude());
+            mapDataDTO.setMessage(thanks.getMessage());
             geoPositions.add(mapDataDTO);
         }
         model.addAttribute("geoPositions", geoPositions);
-        return "dataMaps";
+        return "dataMapsThanks";
     }
 }

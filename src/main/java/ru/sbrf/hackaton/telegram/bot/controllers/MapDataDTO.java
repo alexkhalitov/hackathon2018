@@ -4,6 +4,7 @@ public class MapDataDTO {
 
     private Float longitude;
     private Float latitude;
+    public String message;
 
     public Float getLongitude() {
         return longitude;
@@ -19,6 +20,14 @@ public class MapDataDTO {
 
     public void setLatitude(Float latitude) {
         this.latitude = latitude;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return message;
     }
 
 }

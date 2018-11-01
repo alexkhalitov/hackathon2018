@@ -6,7 +6,7 @@
     <script type="text/javascript" src="http://maps.api.2gis.ru/1.0"></script>
     <script th:inline="javascript">
 
-        function extracted(myMap,coordinate1,coordinate2) {
+        function extracted(myMap,coordinate1,coordinate2, message) {
 
 
             // Создаем балун:
@@ -14,7 +14,7 @@
                 // Местоположение на которое указывает балун:
                 geoPoint: new DG.GeoPoint(coordinate1, coordinate2),
                 // Устанавливаем текст, который будет отображатся при открытии балуна:
-                contentHtml: 'Cgfcb,j! Вы кликнули по мне :)'
+                contentHtml: message
             });
             // Создаем маркер:
             var myMarker = new DG.Markers.Common({
@@ -48,7 +48,7 @@
             arr.forEach(function (item, i, arr) {
 
                    if(item.latitude!=0){
-                       myMap.markers.add(extracted(myMap,item.longitude, item.latitude));
+                       myMap.markers.add(extracted(myMap,item.longitude, item.latitude,item.message));
 
                    }
 
@@ -61,4 +61,4 @@
 
 <div id="myMapId" style="width:500px; height:400px"></div>
 </body>
-</html>
+</html>data
