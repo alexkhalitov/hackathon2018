@@ -1,5 +1,6 @@
 package ru.sbrf.hackaton.telegram.bot.client;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +16,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.sbrf.hackaton.telegram.bot.ai.SentimentalService;
+import ru.sbrf.hackaton.telegram.bot.client.cashpoint.CashPointDontWork;
 import ru.sbrf.hackaton.telegram.bot.config.Config;
-import ru.sbrf.hackaton.telegram.bot.dataprovider.ClientService;
-import ru.sbrf.hackaton.telegram.bot.dataprovider.HistoryMessageRepository;
-import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueCategoryService;
-import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.*;
 import ru.sbrf.hackaton.telegram.bot.model.Client;
 import ru.sbrf.hackaton.telegram.bot.model.Issue;
 import ru.sbrf.hackaton.telegram.bot.model.IssueCategory;
@@ -28,10 +27,8 @@ import ru.sbrf.hackaton.telegram.bot.specialist.SpecialistApi;
 import ru.sbrf.hackaton.telegram.bot.telegramUtils.KeyboardUtils;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ClientBot extends TelegramLongPollingBot implements ClientApi {
@@ -182,6 +179,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                 suggestIdeaSet.add(update.getMessage().getChatId());
                 if (!suggestIdeas.update(update, this)) {
                     suggestIdeaSet.remove(update.getMessage().getChatId());
+                    takeASleep(3000L);
                     SendMessage sendMessage = sayHello(update.getMessage().getChatId(), "Чем могу быть полезен?");
                     sendMsg(sendMessage);
                 }
