@@ -34,18 +34,7 @@ public class FillDB {
     }
 
     private void fillCategories() {
-        IssueCategory hungry = new IssueCategory();
-        hungry.setName("Банкомат съел карту");
-
-        IssueCategory crash = new IssueCategory();
-        crash.setName("Банкомат не работает");
-
-        IssueCategory category = new IssueCategory();
-        category.setName("Банкомат");
-        category.setMainMenu(true);
-        category.getChildren().add(crash);
-        category.getChildren().add(hungry);
-        issueCategoryService.addCategory(category);
+        fillMainCashPointsCategory();
 
         IssueCategory skolzko = new IssueCategory();
         skolzko.setName("Проблема в помещении");
@@ -64,6 +53,37 @@ public class FillDB {
         vsp.getChildren().add(skolzko);
         issueCategoryService.addCategory(vsp);
     }
+
+    private void fillMainCashPointsCategory() {
+        IssueCategory hungry = new IssueCategory();
+        hungry.setName("Не отдаёт карту");
+        hungry.setAnswer("Сразу заблокируйте карту. Это можно сделать в мобильном приложении Сбербанк Онлайн: «Карты» → найдите нужную карту → «Заблокировать карту».\n" +
+                "\n" +
+                "Или позвоните по любому из трёх телефонов:\n" +
+                "\n" +
+                "900 для бесплатных звонков с мобильного телефона");
+
+        IssueCategory invalidMoney = new IssueCategory();
+        invalidMoney.setName("Выдал неверную сумму денег");
+        invalidMoney.setAnswer("Пожалуйста, сохраните чек банкомата и позвоните на номер горячей линии\n 900 " +
+                "(бесплатный звонок с мобильных на территории РФ)");
+
+        IssueCategory crash = new IssueCategory();
+        crash.setName("Не работает");
+
+        IssueCategory other = new IssueCategory();
+        other.setName("Другое");
+
+        IssueCategory mainCategory = new IssueCategory();
+        mainCategory.setName("Банкомат");
+        mainCategory.setMainMenu(true);
+        mainCategory.getChildren().add(crash);
+        mainCategory.getChildren().add(hungry);
+        mainCategory.getChildren().add(invalidMoney);
+        mainCategory.getChildren().add(other);
+        issueCategoryService.addCategory(mainCategory);
+    }
+
 
     private void fillCashPoints() {
         CashPoint cashPoint = new CashPoint();

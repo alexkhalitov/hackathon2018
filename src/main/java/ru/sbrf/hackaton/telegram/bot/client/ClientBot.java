@@ -1,10 +1,10 @@
 package ru.sbrf.hackaton.telegram.bot.client;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -16,7 +16,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.sbrf.hackaton.telegram.bot.ai.SentimentalService;
-import ru.sbrf.hackaton.telegram.bot.client.cashpoint.CashPointDontWork;
+import ru.sbrf.hackaton.telegram.bot.client.handler.CashPointDontWork;
+import ru.sbrf.hackaton.telegram.bot.client.handler.SelfAnsweredCategoryHandler;
 import ru.sbrf.hackaton.telegram.bot.config.Config;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.*;
 import ru.sbrf.hackaton.telegram.bot.model.Client;
@@ -57,8 +58,12 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
 
     @Autowired
     private SayThanks sayThanks;
+    private final Set<Long> suggestIdeaSet = new HashSet<>();
+
 
     private final Set<Long> sayThanksSet = new HashSet<>();
+    @Autowired
+    private SuggestIdeas suggestIdeas;
 
     private static SendMessage sayHello(Long chatId, String txt) {
         SendMessage sendMessage = new SendMessage()
@@ -86,7 +91,10 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
 
 
     private CategoryHandler createHanlder(IssueCategory category, Long chatId) {
-        if (category.getName().equals("Банкомат не работает")) {
+        if(category.getAnswer() != null) {
+            return new SelfAnsweredCategoryHandler(this, chatId, category);
+        }
+        if (category.getName().equals("Не работает")) {
             return new CashPointDontWork(this, chatId, cashPointService);
         } else if (category.getName().equals("Проблема в помещении")) {
             //депенденси инджекшон
@@ -108,7 +116,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         } else if (handler != null) {
             if (!handler.update(update)) {
                 categoryHandlerMap.remove(chatId);
-                SendMessage sendMessage = sayHello(chatId, "Я могу еще чем-нибудь помочь?");
+                SendMessage sendMessage = sayHello(chatId, "Я могу ещё чем-нибудь помочь?");
                 sendMsg(sendMessage);
             }
         }
@@ -169,6 +177,18 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                     .setText("Ваше обращение передано специалисту для первичного анализа");
             specialistApi.ask(newIssue, update.getMessage().getText());
             sendMsg(sendMessage);
+        } else if (ClientBotMenu.IDEA.getCode().equals(txt)
+                || suggestIdeaSet.contains(update.getMessage().getChatId())) {
+            synchronized (suggestIdeaSet) {
+                suggestIdeaSet.add(update.getMessage().getChatId());
+                if (!suggestIdeas.update(update, this)) {
+                    suggestIdeaSet.remove(update.getMessage().getChatId());
+                    takeASleep(3000L);
+                    SendMessage sendMessage = sayHello(update.getMessage().getChatId(), "Чем могу быть полезен?");
+                    sendMsg(sendMessage);
+                }
+            }
+
         } else if (ClientBotMenu.SAY_SPASIBO.getCode().equals(txt)
                 || sayThanksSet.contains(chatId)) {
             synchronized (sayThanksSet) {
@@ -212,6 +232,9 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                                 .setText("<i>Обращение закрыто</i>").enableHtml(true);
                         sendMsg(sendMessage);
                     });
+        } else if ("mainMenu".equals(update.getCallbackQuery().getData())) {
+            SendMessage sendMessage = sayHello(update.getCallbackQuery().getMessage().getChatId(), "Чем могу помочь?");
+            sendMsg(sendMessage);
         }
     }
 

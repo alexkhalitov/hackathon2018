@@ -19,10 +19,30 @@
 
     <properties>
         <spring.version>4.3.20.RELEASE</spring.version>
+        <projectId>newagent-5738a</projectId> <!-- TODO SET PROJECT_ID -->
+        <sessionId>SESSION_ID</sessionId> <!-- TODO SET SESSION_ID -->
     </properties>
 
 
     <dependencies>
+        <!-- START dependencies -->
+        <!--<dependency>-->
+        <!--<groupId>com.google.apis</groupId>-->
+        <!--<artifactId>google-api-services-dialogflow</artifactId>-->
+        <!--</dependency>-->
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-dialogflow</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-storage</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-appengine</artifactId>
+        </dependency>
+        <!-- END dependencies -->
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots</artifactId>
@@ -67,6 +87,11 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>nz.ac.waikato.cms.weka</groupId>
+            <artifactId>weka-stable</artifactId>
+        </dependency>
+
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -81,9 +106,24 @@
     </dependencies>
 
 
-
     <dependencyManagement>
         <dependencies>
+            <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>23.6-jre</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.cloud</groupId>
+                <artifactId>google-cloud-storage</artifactId>
+                <version>1.48.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.auth</groupId>
+                <artifactId>google-auth-library-appengine</artifactId>
+                <version>0.10.0</version>
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
@@ -107,6 +147,16 @@
                 <groupId>commons-beanutils</groupId>
                 <artifactId>commons-beanutils</artifactId>
                 <version>1.9.3</version>
+            </dependency>
+            <dependency>
+                <groupId>nz.ac.waikato.cms.weka</groupId>
+                <artifactId>weka-stable</artifactId>
+                <version>3.8.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.cloud</groupId>
+                <artifactId>google-cloud-dialogflow</artifactId>
+                <version>0.67.0-alpha</version>
             </dependency>
             <dependency>
                 <groupId>nz.ac.waikato.cms.weka</groupId>
