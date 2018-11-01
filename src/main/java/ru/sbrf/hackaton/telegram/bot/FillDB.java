@@ -46,11 +46,11 @@ public class FillDB {
         ham.setName("Некачественное обслуживание");
 
         IssueCategory vsp = new IssueCategory();
-        vsp.setName("Обслуживание в филиале");
+        vsp.setName("Обслуживание в отделении");
         vsp.setMainMenu(true);
+        vsp.getChildren().add(skolzko);
         vsp.getChildren().add(slowpoke);
         vsp.getChildren().add(ham);
-        vsp.getChildren().add(skolzko);
         issueCategoryService.addCategory(vsp);
     }
 

@@ -1,10 +1,9 @@
-package ru.sbrf.hackaton.telegram.bot.client.handler;
+package ru.sbrf.hackaton.telegram.bot.client.handler.cashpoint;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.methods.send.SendLocation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.objects.Location;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -20,16 +19,16 @@ import ru.sbrf.hackaton.telegram.bot.model.GeoPosition;
 import java.util.*;
 
 
-public class CashPointDontWork implements CategoryHandler {
+public class DontWorkHandler implements CategoryHandler {
 
     private final ClientBot clientBot;
     private final Long chatId;
     private final CashPointService cashPointService;
 
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CashPointDontWork.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DontWorkHandler.class);
 
-    public CashPointDontWork(ClientBot clientBot, Long chatId, CashPointService cashPointService) {
+    public DontWorkHandler(ClientBot clientBot, Long chatId, CashPointService cashPointService) {
         this.clientBot = clientBot;
         this.chatId = chatId;
         this.cashPointService = cashPointService;

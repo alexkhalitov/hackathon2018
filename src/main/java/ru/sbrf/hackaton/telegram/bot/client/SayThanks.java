@@ -63,7 +63,7 @@ public class SayThanks {
                     if (update.getMessage().getLocation() != null) {
                         GeoPosition geoPosition = new GeoPosition();
                         geoPosition.setLatitude(location.getLatitude());
-                        geoPosition.setLongitude(location.getLatitude());
+                        geoPosition.setLongitude(location.getLongitude());
                         geoPositionService.add(geoPosition);
                         thanks.setPosition(geoPosition);
                     }

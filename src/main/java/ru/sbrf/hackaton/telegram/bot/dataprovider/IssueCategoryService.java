@@ -7,6 +7,7 @@ import ru.sbrf.hackaton.telegram.bot.model.IssueCategory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class IssueCategoryService {
@@ -40,6 +41,13 @@ public class IssueCategoryService {
 	
 	public void deleteCategory(long id) {
 		issueCategoryRepository.delete(id);
+	}
+
+	public IssueCategory findParentFor(IssueCategory issueCategory) {
+		Optional<IssueCategory> res = getAllCategorys().stream().filter(cat ->
+			cat.getChildren().stream().anyMatch(child -> child.getId().equals(issueCategory.getId()))
+		).findAny();
+		return res.orElse(null);
 	}
 
 	/**

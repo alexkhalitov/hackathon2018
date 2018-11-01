@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Жалобы</title>
+    <script src="https://maps.api.2gis.ru/2.0/loader.js"></script>
+</head>
+<body>
+
+<div id="map" style="width: 100%; height: 400px;"></div>
+<script th:inline="javascript">
+
+    DG.then(function () {
+        var map,
+            marker;
+
+        map = DG.map('map', {
+            center: [55.756893,  37.52933],
+            zoom: 15
+        });
+
+        var arr =[];
+        arr = /*[[${geoPositions}]]*/'defaultvalue';
+        arr.forEach(function (item, i, arr) {
+             console.log("add")
+            if(item.latitude!=0){
+                 marker = DG.marker([item.latitude , item.longitude ], {
+                    draggable: true
+                } ).addTo(map).bindPopup('Жалоба!');;
+            }
+        })
+
+
+    });
+</script>
+</body>
+</html>
