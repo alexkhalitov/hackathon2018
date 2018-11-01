@@ -15,27 +15,38 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import ru.sbrf.hackaton.telegram.bot.dataprovider.ClientService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.GeoPositionService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.SpecialistService;
 import ru.sbrf.hackaton.telegram.bot.model.GeoPosition;
 import ru.sbrf.hackaton.telegram.bot.model.Issue;
-import sun.misc.Cleaner;
+import ru.sbrf.hackaton.telegram.bot.specialist.SpecialistApi;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Service
-public class SkolzkoHandler {
-    @Autowired
-    private GeoPositionService geoPositionService;
-    @Autowired
-    private ClientService clientService;
-    @Autowired
-    private IssueService issueService;
-    private static final Logger LOGGER = LoggerFactory.getLogger(SkolzkoHandler.class);
-    private final Map<Long, Skolzko> states = new HashMap<>();
 
-    synchronized boolean update(Update update, ClientBot clientBot)  {
+public class SkolzkoHandler implements CategoryHandler{
+    private GeoPositionService geoPositionService;
+    private ClientService clientService;
+    private IssueService issueService;
+    private SpecialistApi specialistApi;
+
+    private final ClientBot clientBot;
+    private final long chatId;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SkolzkoHandler.class);
+    public final Map<Long, Skolzko> states = new HashMap<>();
+
+    SkolzkoHandler(ClientBot clientBot, long chatId, GeoPositionService geoPositionService, ClientService clientService, IssueService issueService, SpecialistApi specialistApi) {
+        this.clientBot = clientBot;
+        this.chatId = chatId;
+        this.geoPositionService = geoPositionService;
+        this.clientService = clientService;
+        this.issueService = issueService;
+        this.specialistApi = specialistApi;
+    }
+    synchronized public boolean update(Update update)  {
         try {
             long chatId = update.getMessage().getChatId();
             Skolzko skolzko = states.get(chatId);
@@ -68,6 +79,7 @@ public class SkolzkoHandler {
                         issue.setGeoPosition(geoPosition);
                     }
                     issueService.add(issue);
+                    specialistApi.ask(issue, skolzko.message);
                     clientBot.execute(new SendSticker()
                             .setReplyMarkup(new ReplyKeyboardRemove())
                             .setChatId(chatId).setSticker("CAADAgADmQQAAulVBRi8-VqIiMu2WAI"));
@@ -86,7 +98,7 @@ public class SkolzkoHandler {
     private static SendMessage createLocationRequest(Long chatId) {
         SendMessage sendMessage = new SendMessage()
                 .setChatId(chatId)
-                .setText("Я буду очень признателен Вам, если Вы отправите мне свою геопозицию");
+                .setText("Пожалуйста, отправьте геолокацию офиса");
 
         sendMessage.enableHtml(true);
 
@@ -104,13 +116,6 @@ public class SkolzkoHandler {
         KeyboardRow row = new KeyboardRow();
         KeyboardButton keyboardButton = new KeyboardButton();
         keyboardButton.setText("Поделиться геопозицией").setRequestLocation(true);
-        row.add(keyboardButton);
-        keyboard.add(row);
-
-        // second keyboard line
-        row = new KeyboardRow();
-        keyboardButton = new KeyboardButton();
-        keyboardButton.setText("Пропустить");
         row.add(keyboardButton);
         keyboard.add(row);
 

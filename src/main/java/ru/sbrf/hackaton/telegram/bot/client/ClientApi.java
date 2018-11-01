@@ -12,4 +12,10 @@ public interface ClientApi {
      * @param answer ответ специалиста
      */
     void answer(Issue issue, String answer);
+
+    /**
+     * Отправка клиенту запроса на закрытие тикета
+     * @param issue заявка
+     */
+    void closeIssue(Issue issue);
 }

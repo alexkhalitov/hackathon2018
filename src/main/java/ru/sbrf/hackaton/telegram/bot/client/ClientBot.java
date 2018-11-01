@@ -50,6 +50,8 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
     private SentimentalService sentimentalService;
     @Autowired
     private CashPointService cashPointService;
+    @Autowired
+    private GeoPositionService geoPositionService;
 
     private final Map<Long, CategoryHandler> categoryHandlerMap = new ConcurrentHashMap<>();
 
@@ -84,8 +86,11 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
 
 
     private CategoryHandler createHanlder(IssueCategory category, Long chatId) {
-        if(category.getName().equals("Банкомат не работает")) {
+        if (category.getName().equals("Банкомат не работает")) {
             return new CashPointDontWork(this, chatId, cashPointService);
+        } else if (category.getName().equals("Проблема в помещении")) {
+            //депенденси инджекшон
+            return new SkolzkoHandler(this, chatId, geoPositionService, clientService, issueService, specialistApi);
         }
         return null; //todo
     }
@@ -100,8 +105,8 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         if (ClientBotMenu.START.getCode().equals(txt)) {
             SendMessage sendMessage = sayHello(chatId, null);
             sendMsg(sendMessage);
-        }else if(handler != null) {
-            if(!handler.update(update)) {
+        } else if (handler != null) {
+            if (!handler.update(update)) {
                 categoryHandlerMap.remove(chatId);
                 SendMessage sendMessage = sayHello(chatId, "Хорошо. Я могу еще чем-нибудь помочь?");
                 sendMsg(sendMessage);
@@ -142,12 +147,12 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                     .findAny()
                     .ifPresent(p -> {
                         SendMessage sendMessage = askWhatProblem(update, p);
-                        if(!CollectionUtils.isEmpty(p.getChildren())) {
+                        if (!CollectionUtils.isEmpty(p.getChildren())) {
                             sendMsg(sendMessage);
-                        }else {
+                        } else {
                             CategoryHandler handler1 = createHanlder(p, chatId);
                             categoryHandlerMap.put(chatId, handler1);
-                            if(!handler1.update(update)) {
+                            if (!handler1.update(update)) {
                                 categoryHandlerMap.remove(chatId);
                                 sendMessage = sayHello(chatId, "Хорошо. Я могу еще чем-нибудь помочь?");
                                 sendMsg(sendMessage);
@@ -155,7 +160,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                         }
                     });
 
-        }else if (messageIsIssueDescription(client)) {
+        } else if (messageIsIssueDescription(client)) {
             Issue newIssue = clientService.getNewIssue(client);
             issueService.update(newIssue);
             SendMessage sendMessage = new SendMessage()
@@ -173,6 +178,17 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                     sendMsg(sendMessage);
                 }
             }
+
+        } else if (sayThanksSet.contains(chatId)) {
+            synchronized (sayThanksSet) {
+                sayThanksSet.add(chatId);
+                if (!sayThanks.update(update, this)) {
+                    sayThanksSet.remove(chatId);
+                    SendMessage sendMessage = sayHello(chatId, "Спасибо! Я могу еще чем-нибудь помочь?");
+                    sendMsg(sendMessage);
+                }
+            }
+
         }
     }
 
@@ -232,17 +248,17 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
     }
 
     @Override
-    public String getBotUsername () {
+    public String getBotUsername() {
         return config.getClientBotName();
     }
 
     @Override
-    public String getBotToken () {
+    public String getBotToken() {
         return config.getClientBotToken();
     }
 
     @Override
-    public void answer (Issue issue, String answer){
+    public void answer(Issue issue, String answer) {
         SendMessage sendMessage = new SendMessage()
                 .setChatId(issue.getClient().getChatId())
                 .setText("<i>" + issue.getAssignee().getLastname() + " " + issue.getAssignee().getFirstname() + "</i>:\n" + answer).enableHtml(true)
@@ -250,7 +266,16 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         sendMsg(sendMessage);
     }
 
-    private void sendMsg (SendMessage sendMessage){
+    @Override
+    public void closeIssue(Issue issue) {
+        SendMessage sendMessage = new SendMessage()
+                .setChatId(issue.getClient().getChatId())
+                .setText("Если ваша проблема решена, нажмите кнопку Закрыть обращение")
+                .setReplyMarkup(KeyboardUtils.getInlineButton("closeCurrentIssue", "Закрыть обращение"));
+        sendMsg(sendMessage);
+    }
+
+    private void sendMsg(SendMessage sendMessage) {
         try {
             this.execute(sendMessage);
         } catch (Exception e) {
@@ -264,7 +289,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
      * @param messageText текст
      * @return True, если текст совпадает с одной из категорий
      */
-    private Boolean messageIsIssueCategory (String messageText){
+    private Boolean messageIsIssueCategory(String messageText) {
         return messageText != null && issueCategoryService.getAllCategorys()
                 .stream()
                 .anyMatch(p -> p.getName().toLowerCase().equals(messageText.toLowerCase()));
@@ -276,7 +301,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
      * @param client Клиент
      * @return True, если пользователь прислал описание своей проблемы
      */
-    private Boolean messageIsIssueDescription (Client client){
+    private Boolean messageIsIssueDescription(Client client) {
         Issue issue = clientService.getNewIssue(client);
         return issue != null && StringUtils.isEmpty(issue.getDescription());
     }
