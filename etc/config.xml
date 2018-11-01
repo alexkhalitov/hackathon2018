@@ -4,12 +4,12 @@
 
     <bots>
         <specialist>
-            <name>SberSpecialistBot</name>
-            <token>742271938:AAE-FA2c_5L1E6S3TLkod3ADvFx4GDyduRE</token>
+            <name></name>
+            <token></token>
         </specialist>
         <client>
-            <name>SberbankClientHelpBot</name>
-            <token>656646533:AAEGcoOAbeDMO3PkXVUeXpmgi3QSzccXpJU</token>
+            <name></name>
+            <token></token>
         </client>
     </bots>
 
