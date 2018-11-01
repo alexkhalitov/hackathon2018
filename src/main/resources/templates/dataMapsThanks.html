@@ -1,64 +1,36 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="utf-8"/>
-    <title>Моя карта</title>
-    <script type="text/javascript" src="http://maps.api.2gis.ru/1.0"></script>
-    <script th:inline="javascript">
-
-        function extracted(myMap,coordinate1,coordinate2, message) {
-
-
-            // Создаем балун:
-            var myBalloon = new DG.Balloons.Common({
-                // Местоположение на которое указывает балун:
-                geoPoint: new DG.GeoPoint(coordinate1, coordinate2),
-                // Устанавливаем текст, который будет отображатся при открытии балуна:
-                contentHtml: message
-            });
-            // Создаем маркер:
-            var myMarker = new DG.Markers.Common({
-                // Местоположение на которое указывает маркер:
-                geoPoint: new DG.GeoPoint(coordinate1, coordinate2),
-                // Функция, вызываемая при клике по маркеру
-                clickCallback: function () {
-                    if (!myMap.balloons.getDefaultGroup().contains(myBalloon)) {
-                        // Если балун еще не был добавлен на карту, добавляем его:
-                        myMap.balloons.add(myBalloon);
-                    } else {
-                        // Показываем уже ранее добавленный на карту балун
-                        myBalloon.show();
-                    }
-                }
-            });
-            return myMarker;
-        }
-
-        // Создаем обработчик загрузки страницы:
-        DG.autoload(function() {
-            // Создаем объект карты, связанный с контейнером:
-            var arr =[];
-            arr = /*[[${geoPositions}]]*/'defaultvalue';
-            console.log(arr);
-            var myMap = new DG.Map('myMapId');
-            // Устанавливаем центр карты, и коэффициент масштабирования:
-            myMap.setCenter(new DG.GeoPoint(37.52933, 55.756893), 15);
-            // Добавляем элемент управления коэффициентом масштабирования:
-            myMap.controls.add(new DG.Controls.Zoom());
-            arr.forEach(function (item, i, arr) {
-
-                   if(item.latitude!=0){
-                       myMap.markers.add(extracted(myMap,item.longitude, item.latitude,item.message));
-
-                   }
-
-
-            })
-        });
-    </script>
+    <title>Спасибо</title>
+    <script src="https://maps.api.2gis.ru/2.0/loader.js"></script>
 </head>
 <body>
 
-<div id="myMapId" style="width:500px; height:400px"></div>
+<div id="map" style="width: 100%; height: 400px;"></div>
+<script th:inline="javascript">
+
+    DG.then(function () {
+        var map,
+            marker;
+
+        map = DG.map('map', {
+            center: [55.756893,  37.52933],
+            zoom: 15
+        });
+
+        var arr =[];
+        arr = /*[[${geoPositions}]]*/'defaultvalue';
+        arr.forEach(function (item, i, arr) {
+             console.log("add")
+            if(item.latitude!=0){
+                 marker = DG.marker([item.latitude , item.longitude ] ,   {
+                    draggable: true
+                }).addTo(map).bindPopup(item.message);;
+            }
+        })
+
+
+    });
+</script>
 </body>
-</html>data
+</html>
