@@ -10,8 +10,9 @@ public interface ClientApi {
      * Отправка ответа по заявке
      * @param issue заявка
      * @param answer ответ специалиста
+     * @param photo
      */
-    void answer(Issue issue, String answer);
+    void answer(Issue issue, String answer, String photo);
 
     /**
      * Отправка клиенту запроса на закрытие тикета
