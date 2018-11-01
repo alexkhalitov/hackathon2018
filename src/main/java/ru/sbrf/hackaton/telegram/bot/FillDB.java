@@ -2,8 +2,12 @@ package ru.sbrf.hackaton.telegram.bot;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.CashPointService;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.GeoPositionService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueCategoryService;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.SpecialistService;
+import ru.sbrf.hackaton.telegram.bot.model.CashPoint;
+import ru.sbrf.hackaton.telegram.bot.model.GeoPosition;
 import ru.sbrf.hackaton.telegram.bot.model.IssueCategory;
 import ru.sbrf.hackaton.telegram.bot.model.Specialist;
 
@@ -16,12 +20,17 @@ public class FillDB {
     private IssueCategoryService issueCategoryService;
     @Autowired
     private SpecialistService specialistService;
+    @Autowired
+    private GeoPositionService geoPositionService;
+    @Autowired
+    private CashPointService cashPointService;
 
     @PostConstruct
     public void init(){
         System.out.println("start fill db after run app");
         fillCategories();
         fillSpecialists();
+        fillCashPoints();
     }
 
     private void fillCategories() {
@@ -54,6 +63,46 @@ public class FillDB {
         vsp.getChildren().add(ham);
         vsp.getChildren().add(skolzko);
         issueCategoryService.addCategory(vsp);
+    }
+
+    private void fillCashPoints() {
+        CashPoint cashPoint = new CashPoint();
+        GeoPosition geoPosition = new GeoPosition();
+        cashPoint.setShortAddress("Пресненская наб., 2");
+        cashPoint.setAddress("Пресненская наб., 2");
+        geoPosition.setLatitude(55.749137F);
+        geoPosition.setLongitude(37.537456F);
+        cashPoint.setGeoPosition(geoPosition);
+        geoPositionService.add(geoPosition);
+        cashPointService.add(cashPoint);
+        cashPoint = new CashPoint();
+        geoPosition = new GeoPosition();
+        cashPoint.setShortAddress("Соймоновский пр-д, 5");
+        cashPoint.setAddress("Соймоновский пр-д, 5");
+        geoPosition.setLatitude(55.750496F);
+        geoPosition.setLongitude(37.539387F);
+        cashPoint.setGeoPosition(geoPosition);
+        geoPositionService.add(geoPosition);
+        cashPointService.add(cashPoint);
+        cashPoint = new CashPoint();
+        geoPosition = new GeoPosition();
+        cashPoint.setShortAddress("Шмитовский пр-д, 16 стр.1");
+        cashPoint.setAddress("Шмитовский пр-д, 16 стр.1");
+        geoPosition.setLatitude(55.758471F);
+        geoPosition.setLongitude(37.549409F);
+        cashPoint.setGeoPosition(geoPosition);
+        geoPositionService.add(geoPosition);
+        cashPointService.add(cashPoint);
+        cashPoint = new CashPoint();
+        geoPosition = new GeoPosition();
+        cashPoint.setShortAddress("Краснопресненская наб., 2, строение 1");
+        cashPoint.setAddress("Краснопресненская наб., 2, строение 1");
+        geoPosition.setLatitude(55.755436F);
+        geoPosition.setLongitude(37.573615F);
+        cashPoint.setGeoPosition(geoPosition);
+        geoPositionService.add(geoPosition);
+        cashPointService.add(cashPoint);
+
     }
 
     private void fillSpecialists() {
