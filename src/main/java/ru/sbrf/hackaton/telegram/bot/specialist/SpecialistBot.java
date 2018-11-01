@@ -233,7 +233,13 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
                 .setChatId(issue.getClient().getChatId())
                 .setText("Клиент подтвердил закрытие обращения");
         sendMsg(sendMessage);
-        activeIssues.values().remove(issue);
+        Iterator<Issue> iterator = activeIssues.values().iterator();
+        while(iterator.hasNext()) {
+            if(iterator.next().getId().equals(issue.getId())) {
+                iterator.remove();
+                break;
+            }
+        }
     }
 
 }

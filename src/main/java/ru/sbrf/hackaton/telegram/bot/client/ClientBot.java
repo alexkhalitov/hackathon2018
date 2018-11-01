@@ -16,7 +16,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.sbrf.hackaton.telegram.bot.ai.SentimentalService;
-import ru.sbrf.hackaton.telegram.bot.client.handler.CashPointDontWork;
+import ru.sbrf.hackaton.telegram.bot.client.handler.cashpoint.DontWorkHandler;
 import ru.sbrf.hackaton.telegram.bot.client.handler.SelfAnsweredCategoryHandler;
 import ru.sbrf.hackaton.telegram.bot.config.Config;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.*;
@@ -94,11 +94,16 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         if(category.getAnswer() != null) {
             return new SelfAnsweredCategoryHandler(this, chatId, category);
         }
-        if (category.getName().equals("Не работает")) {
-            return new CashPointDontWork(this, chatId, cashPointService);
+        if(issueCategoryService.findParentFor(category).getName().equals("Банкомат")) {
+            String name = category.getName();
+            if (name.equals("Не работает")) {
+                return new DontWorkHandler(this, chatId, cashPointService);
+            }else if(name.equals("Другое")) {
+                return new AskSpecialistWithGeopositionSendingHandler(this, chatId, geoPositionService, clientService, issueService, specialistApi);
+            }
         } else if (category.getName().equals("Проблема в помещении")) {
             //депенденси инджекшон
-            return new SkolzkoHandler(this, chatId, geoPositionService, clientService, issueService, specialistApi);
+            return new AskSpecialistWithGeopositionSendingHandler(this, chatId, geoPositionService, clientService, issueService, specialistApi);
         }
         return null; //todo
     }

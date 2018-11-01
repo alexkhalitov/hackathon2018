@@ -2,8 +2,6 @@ package ru.sbrf.hackaton.telegram.bot.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.objects.Location;
@@ -27,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public class SkolzkoHandler implements CategoryHandler{
+public class AskSpecialistWithGeopositionSendingHandler implements CategoryHandler{
     private GeoPositionService geoPositionService;
     private ClientService clientService;
     private IssueService issueService;
@@ -36,10 +34,10 @@ public class SkolzkoHandler implements CategoryHandler{
     private final ClientBot clientBot;
     private final long chatId;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SkolzkoHandler.class);
-    public final Map<Long, Skolzko> states = new HashMap<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(AskSpecialistWithGeopositionSendingHandler.class);
+    private final Map<Long, Skolzko> states = new HashMap<>();
 
-    SkolzkoHandler(ClientBot clientBot, long chatId, GeoPositionService geoPositionService, ClientService clientService, IssueService issueService, SpecialistApi specialistApi) {
+    AskSpecialistWithGeopositionSendingHandler(ClientBot clientBot, long chatId, GeoPositionService geoPositionService, ClientService clientService, IssueService issueService, SpecialistApi specialistApi) {
         this.clientBot = clientBot;
         this.chatId = chatId;
         this.geoPositionService = geoPositionService;
@@ -49,13 +47,12 @@ public class SkolzkoHandler implements CategoryHandler{
     }
     synchronized public boolean update(Update update)  {
         try {
-            long chatId = update.getMessage().getChatId();
             Skolzko skolzko = states.get(chatId);
             if (skolzko == null) {
                 clientBot.execute(new SendMessage(chatId, "Пожалуйста, опишите суть проблемы")
                         .setReplyMarkup(new ReplyKeyboardRemove()));
                 skolzko = new Skolzko();
-                skolzko.state = SkolzkoHandler.State.ASK_TEXT;
+                skolzko.state = AskSpecialistWithGeopositionSendingHandler.State.ASK_TEXT;
                 states.put(chatId, skolzko);
                 return true;
             }
@@ -64,7 +61,7 @@ public class SkolzkoHandler implements CategoryHandler{
                     //clientBot.execute(new SendSticker().setChatId(chatId).setSticker("CAADAgADoAQAAulVBRgYWAbVG2ThQgI"));
                     clientBot.execute(createLocationRequest(chatId));
                     skolzko.message = update.getMessage().getText();
-                    skolzko.state = SkolzkoHandler.State.ASK_GEOPOSITION;
+                    skolzko.state = AskSpecialistWithGeopositionSendingHandler.State.ASK_GEOPOSITION;
                     return true;
 
                 case ASK_GEOPOSITION:
