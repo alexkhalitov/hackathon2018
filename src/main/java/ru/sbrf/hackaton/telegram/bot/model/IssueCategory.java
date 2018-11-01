@@ -1,6 +1,7 @@
 package ru.sbrf.hackaton.telegram.bot.model;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -9,10 +10,21 @@ import java.util.List;
 @Entity
 @Table(name="issue_categories")
 public class IssueCategory {
+    public IssueCategory(){
+        children = new ArrayList<>();
 
+    }
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
+
+    public Boolean getMainMenu() {
+        return mainMenu;
+    }
+
+    public void setMainMenu(Boolean mainMenu) {
+        this.mainMenu = mainMenu;
+    }
 
     @Column(name = "severity")
     @Enumerated(value = EnumType.STRING)
@@ -20,6 +32,8 @@ public class IssueCategory {
 
     @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private List<IssueCategory> children;
+
+    Boolean mainMenu;
 
     @Column(name="name")
     private String name;

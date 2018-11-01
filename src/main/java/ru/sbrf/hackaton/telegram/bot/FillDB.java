@@ -25,12 +25,32 @@ public class FillDB {
     }
 
     private void fillCategories() {
+        IssueCategory findBank = new IssueCategory();
+        findBank.setName("Найти ближайшие банкоматы");
+
+        IssueCategory crash = new IssueCategory();
+        crash.setName("Банкомат сломался");
+
         IssueCategory category = new IssueCategory();
         category.setName("Банкомат");
+        category.getChildren().add(findBank);
+        category.getChildren().add(crash);
         issueCategoryService.addCategory(category);
+
+        IssueCategory skolzko = new IssueCategory();
+        skolzko.setName("Проблема в помещении");
+
+        IssueCategory slowpoke = new IssueCategory();
+        slowpoke.setName("Медленное обслуживание");
+
+        IssueCategory ham = new IssueCategory();
+        ham.setName("Некачественное обслуживание");
 
         IssueCategory vsp = new IssueCategory();
         vsp.setName("Обслуживание в филиале");
+        vsp.getChildren().add(slowpoke);
+        vsp.getChildren().add(ham);
+        vsp.getChildren().add(skolzko);
         issueCategoryService.addCategory(vsp);
     }
 
