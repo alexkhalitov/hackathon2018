@@ -33,6 +33,7 @@ public class FillDB {
 
         IssueCategory category = new IssueCategory();
         category.setName("Банкомат");
+        category.setMainMenu(true);
         category.getChildren().add(findBank);
         category.getChildren().add(crash);
         issueCategoryService.addCategory(category);
@@ -48,6 +49,7 @@ public class FillDB {
 
         IssueCategory vsp = new IssueCategory();
         vsp.setName("Обслуживание в филиале");
+        vsp.setMainMenu(true);
         vsp.getChildren().add(slowpoke);
         vsp.getChildren().add(ham);
         vsp.getChildren().add(skolzko);

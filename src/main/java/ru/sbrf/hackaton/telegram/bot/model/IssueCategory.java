@@ -18,11 +18,11 @@ public class IssueCategory {
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
 
-    public Boolean getMainMenu() {
+    public boolean getMainMenu() {
         return mainMenu;
     }
 
-    public void setMainMenu(Boolean mainMenu) {
+    public void setMainMenu(boolean mainMenu) {
         this.mainMenu = mainMenu;
     }
 
@@ -33,7 +33,8 @@ public class IssueCategory {
     @OneToMany(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.ALL)
     private List<IssueCategory> children;
 
-    Boolean mainMenu;
+    @Column
+    private boolean mainMenu;
 
     @Column(name="name")
     private String name;
