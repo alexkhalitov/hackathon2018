@@ -2,6 +2,7 @@ package ru.sbrf.hackaton.telegram.bot.model;
 
 
 import javax.persistence.*;
+import java.util.Objects;
 
 /**
  * Банкомат
@@ -19,6 +20,17 @@ public class CashPoint {
 
     @Column(name = "address", nullable = false)
     private String address;
+
+    @Column
+    private String shortAddress;
+
+    public String getShortAddress() {
+        return shortAddress;
+    }
+
+    public void setShortAddress(String shortAddress) {
+        this.shortAddress = shortAddress;
+    }
 
     @OneToOne
     private GeoPosition geoPosition;
@@ -72,5 +84,18 @@ public class CashPoint {
                 ", address='" + address + '\'' +
                 ", geoPosition=" + geoPosition +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CashPoint cashPoint = (CashPoint) o;
+        return Objects.equals(id, cashPoint.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

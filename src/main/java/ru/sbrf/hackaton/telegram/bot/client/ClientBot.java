@@ -16,11 +16,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.sbrf.hackaton.telegram.bot.ai.SentimentalService;
+import ru.sbrf.hackaton.telegram.bot.client.cashpoint.CashPointDontWork;
 import ru.sbrf.hackaton.telegram.bot.config.Config;
-import ru.sbrf.hackaton.telegram.bot.dataprovider.ClientService;
-import ru.sbrf.hackaton.telegram.bot.dataprovider.HistoryMessageRepository;
-import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueCategoryService;
-import ru.sbrf.hackaton.telegram.bot.dataprovider.IssueService;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.*;
 import ru.sbrf.hackaton.telegram.bot.model.Client;
 import ru.sbrf.hackaton.telegram.bot.model.Issue;
 import ru.sbrf.hackaton.telegram.bot.model.IssueCategory;
@@ -50,6 +48,8 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
     private HistoryMessageRepository historyMessageRepository;
     @Autowired
     private SentimentalService sentimentalService;
+    @Autowired
+    private CashPointService cashPointService;
 
     private final Map<Long, CategoryHandler> categoryHandlerMap = new ConcurrentHashMap<>();
 
@@ -85,7 +85,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
 
     private CategoryHandler createHanlder(IssueCategory category, Long chatId) {
         if(category.getName().equals("Банкомат не работает")) {
-            return new CashPointDontWork(this, chatId);
+            return new CashPointDontWork(this, chatId, cashPointService);
         }
         return null; //todo
     }
@@ -95,10 +95,17 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         String txt = msg.getText();
         Long chatId = msg.getChatId();
         Client client = clientService.getByChatId(chatId);
+        CategoryHandler handler = categoryHandlerMap.get(chatId);
 
         if (ClientBotMenu.START.getCode().equals(txt)) {
             SendMessage sendMessage = sayHello(chatId, null);
             sendMsg(sendMessage);
+        }else if(handler != null) {
+            if(!handler.update(update)) {
+                categoryHandlerMap.remove(chatId);
+                SendMessage sendMessage = sayHello(chatId, "Хорошо. Я могу еще чем-нибудь помочь?");
+                sendMsg(sendMessage);
+            }
         }
 //        else if (messageIsIssueCategory(txt)) {
 //            if (client.getIssues().stream().anyMatch(p -> IssueStatus.NEW.equals(p.getStatus()))) {
@@ -138,12 +145,9 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                         if(!CollectionUtils.isEmpty(p.getChildren())) {
                             sendMsg(sendMessage);
                         }else {
-                            CategoryHandler handler = categoryHandlerMap.get(chatId);
-                            if(handler == null) {
-                                handler = createHanlder(p, chatId);
-                                categoryHandlerMap.put(chatId, handler);
-                            }
-                            if(!handler.update(update)) {
+                            CategoryHandler handler1 = createHanlder(p, chatId);
+                            categoryHandlerMap.put(chatId, handler1);
+                            if(!handler1.update(update)) {
                                 categoryHandlerMap.remove(chatId);
                                 sendMessage = sayHello(chatId, "Хорошо. Я могу еще чем-нибудь помочь?");
                                 sendMsg(sendMessage);
@@ -214,67 +218,67 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                 }
             }
         }
-            for (IssueCategory issueCategory : subListCategory) {
-                KeyboardRow keyboardFirstRow = new KeyboardRow();
-                KeyboardButton keyboardButton = new KeyboardButton();
-                keyboardButton.setText(issueCategory.getName());
-                keyboardFirstRow.add(keyboardButton);
-                // add array to list
-                keyboard.add(keyboardFirstRow);
-            }
-            categoryList.setKeyboard(keyboard);
-            sendMessage.setReplyToMessageId(update.getMessage().getMessageId());
-            return sendMessage;
+        for (IssueCategory issueCategory : subListCategory) {
+            KeyboardRow keyboardFirstRow = new KeyboardRow();
+            KeyboardButton keyboardButton = new KeyboardButton();
+            keyboardButton.setText(issueCategory.getName());
+            keyboardFirstRow.add(keyboardButton);
+            // add array to list
+            keyboard.add(keyboardFirstRow);
         }
-
-        @Override
-        public String getBotUsername () {
-            return config.getClientBotName();
-        }
-
-        @Override
-        public String getBotToken () {
-            return config.getClientBotToken();
-        }
-
-        @Override
-        public void answer (Issue issue, String answer){
-            SendMessage sendMessage = new SendMessage()
-                    .setChatId(issue.getClient().getChatId())
-                    .setText("<i>" + issue.getAssignee().getLastname() + " " + issue.getAssignee().getFirstname() + "</i>:\n" + answer).enableHtml(true)
-                    .setReplyMarkup(KeyboardUtils.getInlineButton("closeCurrentIssue", "Закрыть обращение"));
-            sendMsg(sendMessage);
-        }
-
-        private void sendMsg (SendMessage sendMessage){
-            try {
-                this.execute(sendMessage);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        /**
-         * Возвращает true, если пользователь прислал категорию проблемы
-         *
-         * @param messageText текст
-         * @return True, если текст совпадает с одной из категорий
-         */
-        private Boolean messageIsIssueCategory (String messageText){
-            return messageText != null && issueCategoryService.getAllCategorys()
-                    .stream()
-                    .anyMatch(p -> p.getName().toLowerCase().equals(messageText.toLowerCase()));
-        }
-
-        /**
-         * Возвращает true, если пользователь прислал текст, описывающий его проблему
-         *
-         * @param client Клиент
-         * @return True, если пользователь прислал описание своей проблемы
-         */
-        private Boolean messageIsIssueDescription (Client client){
-            Issue issue = clientService.getNewIssue(client);
-            return issue != null && StringUtils.isEmpty(issue.getDescription());
-        }
-
+        categoryList.setKeyboard(keyboard);
+        sendMessage.setReplyToMessageId(update.getMessage().getMessageId());
+        return sendMessage;
     }
+
+    @Override
+    public String getBotUsername () {
+        return config.getClientBotName();
+    }
+
+    @Override
+    public String getBotToken () {
+        return config.getClientBotToken();
+    }
+
+    @Override
+    public void answer (Issue issue, String answer){
+        SendMessage sendMessage = new SendMessage()
+                .setChatId(issue.getClient().getChatId())
+                .setText("<i>" + issue.getAssignee().getLastname() + " " + issue.getAssignee().getFirstname() + "</i>:\n" + answer).enableHtml(true)
+                .setReplyMarkup(KeyboardUtils.getInlineButton("closeCurrentIssue", "Закрыть обращение"));
+        sendMsg(sendMessage);
+    }
+
+    private void sendMsg (SendMessage sendMessage){
+        try {
+            this.execute(sendMessage);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Возвращает true, если пользователь прислал категорию проблемы
+     *
+     * @param messageText текст
+     * @return True, если текст совпадает с одной из категорий
+     */
+    private Boolean messageIsIssueCategory (String messageText){
+        return messageText != null && issueCategoryService.getAllCategorys()
+                .stream()
+                .anyMatch(p -> p.getName().toLowerCase().equals(messageText.toLowerCase()));
+    }
+
+    /**
+     * Возвращает true, если пользователь прислал текст, описывающий его проблему
+     *
+     * @param client Клиент
+     * @return True, если пользователь прислал описание своей проблемы
+     */
+    private Boolean messageIsIssueDescription (Client client){
+        Issue issue = clientService.getNewIssue(client);
+        return issue != null && StringUtils.isEmpty(issue.getDescription());
+    }
+
+}

@@ -1,30 +1,35 @@
-package ru.sbrf.hackaton.telegram.bot.client;
+package ru.sbrf.hackaton.telegram.bot.client.cashpoint;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Location;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import ru.sbrf.hackaton.telegram.bot.client.CategoryHandler;
+import ru.sbrf.hackaton.telegram.bot.client.ClientBot;
+import ru.sbrf.hackaton.telegram.bot.dataprovider.CashPointService;
+import ru.sbrf.hackaton.telegram.bot.model.CashPoint;
+import ru.sbrf.hackaton.telegram.bot.model.GeoPosition;
 
 import java.util.*;
 
 
-public class CashPointDontWork implements CategoryHandler{
+public class CashPointDontWork implements CategoryHandler {
 
     private final ClientBot clientBot;
     private final Long chatId;
+    private final CashPointService cashPointService;
 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CashPointDontWork.class);
 
-    CashPointDontWork(ClientBot clientBot, Long chatId) {
+    public CashPointDontWork(ClientBot clientBot, Long chatId, CashPointService cashPointService) {
         this.clientBot = clientBot;
         this.chatId = chatId;
+        this.cashPointService = cashPointService;
     }
 
 
@@ -37,7 +42,7 @@ public class CashPointDontWork implements CategoryHandler{
                 clientBot.execute(createLocationRequest(chatId));
                 return true;
             }else  {
-                clientBot.execute(sendNearestCashpoints());
+                clientBot.execute(sendNearestCashpoints(location));
                 return false;
             }
 
@@ -48,8 +53,39 @@ public class CashPointDontWork implements CategoryHandler{
         }
     }
 
-    private SendMessage sendNearestCashpoints() {
-        return null;
+    private SendMessage sendNearestCashpoints(Location location) {
+        TreeMap<Double, CashPoint> cashPoints = new TreeMap<>();
+        cashPointService.getAll().forEach(cashPoint -> {
+            GeoPosition geoPosition = cashPoint.getGeoPosition();
+            cashPoints.put(distance(geoPosition.getLatitude(),
+                    location.getLatitude(), geoPosition.getLongitude(), location.getLongitude())
+                    , cashPoint);
+        });
+        StringBuilder stringBuilder = new StringBuilder();
+//        stringBuilder.append("<ul>");
+        final int[] i= new int[]{0};
+        cashPoints.forEach((aDouble, cashPoint) -> {
+            if(i[0] < 3) {
+                i[0]++;
+                stringBuilder.append(cashPoint.getShortAddress()).append(" - ").append(aDouble.intValue()).append(" м.\n");
+            }
+        });
+//        stringBuilder.append("</ul>");
+        return new SendMessage(chatId, stringBuilder.toString());
+    }
+
+    private static double distance(double lat1, double lat2, double lon1,
+                                  double lon2) {
+        final int R = 6371; // Radius of the earth
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = R * c * 1000; // convert to meters
+        distance = Math.pow(distance, 2);
+        return Math.sqrt(distance);
     }
 
     private static SendMessage createLocationRequest(Long chatId) {
@@ -88,7 +124,7 @@ public class CashPointDontWork implements CategoryHandler{
         return sendMessage;
     }
 
- 
+
 
 
 }
