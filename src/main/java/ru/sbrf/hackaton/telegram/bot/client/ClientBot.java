@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -28,10 +29,8 @@ import ru.sbrf.hackaton.telegram.bot.specialist.SpecialistApi;
 import ru.sbrf.hackaton.telegram.bot.telegramUtils.KeyboardUtils;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class ClientBot extends TelegramLongPollingBot implements ClientApi {
@@ -51,6 +50,8 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
     private HistoryMessageRepository historyMessageRepository;
     @Autowired
     private SentimentalService sentimentalService;
+
+    private final Map<Long, CategoryHandler> categoryHandlerMap = new ConcurrentHashMap<>();
 
     @Autowired
     private SayThanks sayThanks;
@@ -81,36 +82,46 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         }
     }
 
+
+    private CategoryHandler createHanlder(IssueCategory category, Long chatId) {
+        if(category.getName().equals("Банкомат не работает")) {
+            return new CashPointDontWork(this, chatId);
+        }
+        return null; //todo
+    }
+
     private void processMessage(Update update) {
         Message msg = update.getMessage();
         String txt = msg.getText();
-        Client client = clientService.getByChatId(update.getMessage().getChatId());
+        Long chatId = msg.getChatId();
+        Client client = clientService.getByChatId(chatId);
 
         if (ClientBotMenu.START.getCode().equals(txt)) {
-            SendMessage sendMessage = sayHello(update.getMessage().getChatId(), null);
+            SendMessage sendMessage = sayHello(chatId, null);
             sendMsg(sendMessage);
-
-        } else if (messageIsIssueCategory(txt)) {
-            if (client.getIssues().stream().anyMatch(p -> IssueStatus.NEW.equals(p.getStatus()))) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("У тебя уже есть необработанное сообщение. Если хочешь что-то добавить, просто напиши");
-                }
-            } else {
-                Issue newIssue = issueService.createNewIssue(client);
-                newIssue.setIssueCategory(issueCategoryService.getIssueCategoryByName(txt));
-                issueService.update(newIssue);
-                SendMessage sendMessage = new SendMessage()
-                        .setChatId(update.getMessage().getChatId())
-                        .setText("Опишите суть проблемы");
-                sendMsg(sendMessage);
-            }
-        } else if (client.getIssues().stream().anyMatch(p -> IssueStatus.IN_PROCESS.equals(p.getStatus()))) {
+        }
+//        else if (messageIsIssueCategory(txt)) {
+//            if (client.getIssues().stream().anyMatch(p -> IssueStatus.NEW.equals(p.getStatus()))) {
+//                if (LOGGER.isDebugEnabled()) {
+//                    LOGGER.debug("У тебя уже есть необработанное сообщение. Если хочешь что-то добавить, просто напиши");
+//                }
+//            } else {
+//                Issue newIssue = issueService.createNewIssue(client);
+//                newIssue.setIssueCategory(issueCategoryService.getIssueCategoryByName(txt));
+//                issueService.update(newIssue);
+//                SendMessage sendMessage = new SendMessage()
+//                        .setChatId(chatId)
+//                        .setText("Опишите суть проблемы");
+//                sendMsg(sendMessage);
+//            }
+//        }
+        else if (client.getIssues().stream().anyMatch(p -> IssueStatus.IN_PROCESS.equals(p.getStatus()))) {
             client.getIssues().stream().filter(p -> IssueStatus.IN_PROCESS.equals(p.getStatus()))
                     .findAny()
                     .ifPresent(p -> {
                         specialistApi.ask(p, txt);
                         SendMessage sendMessage = new SendMessage()
-                                .setChatId(update.getMessage().getChatId())
+                                .setChatId(chatId)
                                 .setText("<i>Сообщение направлено сотруднику банка</i>").enableHtml(true);
                         sendMsg(sendMessage);
                     });
@@ -124,24 +135,37 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
                     .findAny()
                     .ifPresent(p -> {
                         SendMessage sendMessage = askWhatProblem(update, p);
-                        sendMsg(sendMessage);
+                        if(!CollectionUtils.isEmpty(p.getChildren())) {
+                            sendMsg(sendMessage);
+                        }else {
+                            CategoryHandler handler = categoryHandlerMap.get(chatId);
+                            if(handler == null) {
+                                handler = createHanlder(p, chatId);
+                                categoryHandlerMap.put(chatId, handler);
+                            }
+                            if(!handler.update(update)) {
+                                categoryHandlerMap.remove(chatId);
+                                sendMessage = sayHello(chatId, "Хорошо. Я могу еще чем-нибудь помочь?");
+                                sendMsg(sendMessage);
+                            }
+                        }
                     });
 
         }else if (messageIsIssueDescription(client)) {
             Issue newIssue = clientService.getNewIssue(client);
             issueService.update(newIssue);
             SendMessage sendMessage = new SendMessage()
-                    .setChatId(update.getMessage().getChatId())
+                    .setChatId(chatId)
                     .setText("Ваше обращение передано специалисту для первичного анализа");
             specialistApi.ask(newIssue, update.getMessage().getText());
             sendMsg(sendMessage);
         } else if (ClientBotMenu.SAY_SPASIBO.getCode().equals(txt)
-                || sayThanksSet.contains(update.getMessage().getChatId())) {
+                || sayThanksSet.contains(chatId)) {
             synchronized (sayThanksSet) {
-                sayThanksSet.add(update.getMessage().getChatId());
+                sayThanksSet.add(chatId);
                 if (!sayThanks.update(update, this)) {
-                    sayThanksSet.remove(update.getMessage().getChatId());
-                    SendMessage sendMessage = sayHello(update.getMessage().getChatId(), "Спасибо! Я могу еще чем-нибудь помочь?");
+                    sayThanksSet.remove(chatId);
+                    SendMessage sendMessage = sayHello(chatId, "Спасибо! Я могу еще чем-нибудь помочь?");
                     sendMsg(sendMessage);
                 }
             }

@@ -25,17 +25,17 @@ public class FillDB {
     }
 
     private void fillCategories() {
-        IssueCategory findBank = new IssueCategory();
-        findBank.setName("Найти ближайшие банкоматы");
+        IssueCategory hungry = new IssueCategory();
+        hungry.setName("Банкомат съел карту");
 
         IssueCategory crash = new IssueCategory();
-        crash.setName("Банкомат сломался");
+        crash.setName("Банкомат не работает");
 
         IssueCategory category = new IssueCategory();
         category.setName("Банкомат");
         category.setMainMenu(true);
-        category.getChildren().add(findBank);
         category.getChildren().add(crash);
+        category.getChildren().add(hungry);
         issueCategoryService.addCategory(category);
 
         IssueCategory skolzko = new IssueCategory();
