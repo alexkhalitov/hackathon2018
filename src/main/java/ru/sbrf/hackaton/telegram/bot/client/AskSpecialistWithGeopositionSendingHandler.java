@@ -81,7 +81,7 @@ public class AskSpecialistWithGeopositionSendingHandler implements CategoryHandl
                     if (location != null) {
                         GeoPosition geoPosition = new GeoPosition();
                         geoPosition.setLatitude(location.getLatitude());
-                        geoPosition.setLongitude(location.getLatitude());
+                        geoPosition.setLongitude(location.getLongitude());
                         geoPositionService.add(geoPosition);
                         issue.setGeoPosition(geoPosition);
                     }
