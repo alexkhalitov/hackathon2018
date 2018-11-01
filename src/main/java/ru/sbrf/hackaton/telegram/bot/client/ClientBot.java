@@ -16,7 +16,8 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import ru.sbrf.hackaton.telegram.bot.ai.SentimentalService;
-import ru.sbrf.hackaton.telegram.bot.client.cashpoint.CashPointDontWork;
+import ru.sbrf.hackaton.telegram.bot.client.handler.CashPointDontWork;
+import ru.sbrf.hackaton.telegram.bot.client.handler.SelfAnsweredCategoryHandler;
 import ru.sbrf.hackaton.telegram.bot.config.Config;
 import ru.sbrf.hackaton.telegram.bot.dataprovider.*;
 import ru.sbrf.hackaton.telegram.bot.model.Client;
@@ -86,7 +87,10 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
 
 
     private CategoryHandler createHanlder(IssueCategory category, Long chatId) {
-        if (category.getName().equals("Банкомат не работает")) {
+        if(category.getAnswer() != null) {
+            return new SelfAnsweredCategoryHandler(this, chatId, category);
+        }
+        if (category.getName().equals("Не работает")) {
             return new CashPointDontWork(this, chatId, cashPointService);
         } else if (category.getName().equals("Проблема в помещении")) {
             //депенденси инджекшон
@@ -108,7 +112,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         } else if (handler != null) {
             if (!handler.update(update)) {
                 categoryHandlerMap.remove(chatId);
-                SendMessage sendMessage = sayHello(chatId, "Я могу еще чем-нибудь помочь?");
+                SendMessage sendMessage = sayHello(chatId, "Я могу ещё чем-нибудь помочь?");
                 sendMsg(sendMessage);
             }
         }

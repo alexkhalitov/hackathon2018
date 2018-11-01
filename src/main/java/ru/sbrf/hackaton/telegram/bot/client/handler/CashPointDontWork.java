@@ -1,9 +1,10 @@
-package ru.sbrf.hackaton.telegram.bot.client.cashpoint;
+package ru.sbrf.hackaton.telegram.bot.client.handler;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.methods.send.SendLocation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendSticker;
 import org.telegram.telegrambots.meta.api.objects.Location;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
@@ -81,7 +82,7 @@ public class CashPointDontWork implements CategoryHandler {
     }
 
     private static double distance(double lat1, double lat2, double lon1,
-                                  double lon2) {
+                                   double lon2) {
         final int R = 6371; // Radius of the earth
         double latDistance = Math.toRadians(lat2 - lat1);
         double lonDistance = Math.toRadians(lon2 - lon1);
@@ -97,7 +98,7 @@ public class CashPointDontWork implements CategoryHandler {
     private static SendMessage createLocationRequest(Long chatId) {
         SendMessage sendMessage = new SendMessage()
                 .setChatId(chatId)
-                .setText("Я буду очень признателен Вам, если Вы отправите мне свою геопозицию");
+                .setText("Отправьте мне свою геопозицию. Я подберу для Вас ближайший банкомат!");
 
         sendMessage.enableHtml(true);
 

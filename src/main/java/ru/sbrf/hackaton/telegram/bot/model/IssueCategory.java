@@ -42,7 +42,7 @@ public class IssueCategory {
     @Column(name="description", length = 2048)
     private String description;
 
-    @Column(name="answer", length = 2048)
+    @Column(name="answer", length = 4096)
     private String answer;
 
     public Long getId() {
