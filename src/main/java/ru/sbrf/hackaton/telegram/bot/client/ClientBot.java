@@ -136,8 +136,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         Client client = clientService.getByChatId(chatId);
         CategoryHandler handler = categoryHandlerMap.get(chatId);
 
-
-        if ("/start".equals(txt)) {
+        if (ClientBotMenu.START.getCode().equals(txt)) {
             SendMessage sendMessage = sayHello(chatId, null);
             sendMsg(sendMessage);
         } else if (handler != null) {
