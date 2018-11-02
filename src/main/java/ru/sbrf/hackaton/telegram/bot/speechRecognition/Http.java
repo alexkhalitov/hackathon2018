@@ -4,19 +4,29 @@ import java.net.*;
 import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
+import com.google.gson.Gson;
 
 public class Http {
-    public static void main(String[] file_id) throws Exception {
-        URL url1 = new URL("https://api.telegram.org/bot512352697:AAEtgjMGhbjsrttQ6WQy0r1dewNBFIU21Zw/getFile?file_id=AwADAgADdwMAAjn_2UqFf9WFGS2quwI");
-        URLConnection yc1 = url1.openConnection();
-        BufferedReader in1 = new BufferedReader(
-                new InputStreamReader(
-                        yc1.getInputStream()));
-        String inputLine;
-        while ((inputLine = in1.readLine()) != null) {
+    public static void saveFile(String file_id) throws Exception {
+        String       postUrl       = "https://api.telegram.org/bot512352697:AAEtgjMGhbjsrttQ6WQy0r1dewNBFIU21Zw/getFile?file_id=" + file_id;// put in your url
+        HttpClient   httpClient    = HttpClientBuilder.create().build();
+        HttpPost     post          = new HttpPost(postUrl);
+        post.setHeader("Content-type", "application/json");
+        HttpResponse  response = httpClient.execute(post);
 
+        BufferedReader rd = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+        String line = "";
+        String fileName = "";
+        while ((line = rd.readLine()) != null) {
+            fileName = line.split("file_path")[1].replaceAll("\"", "").replaceAll(":", "").replaceAll("}", "");
         }
-        URL url = new URL("https://api.telegram.org/file/bot512352697:AAEtgjMGhbjsrttQ6WQy0r1dewNBFIU21Zw/voice/file_59.oga");
+        URL url = new URL("https://api.telegram.org/file/bot512352697:AAEtgjMGhbjsrttQ6WQy0r1dewNBFIU21Zw/" + fileName);
         URLConnection yc = url.openConnection();
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(

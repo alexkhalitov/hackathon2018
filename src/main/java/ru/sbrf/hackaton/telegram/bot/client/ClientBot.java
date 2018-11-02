@@ -27,10 +27,13 @@ import ru.sbrf.hackaton.telegram.bot.model.Issue;
 import ru.sbrf.hackaton.telegram.bot.model.IssueCategory;
 import ru.sbrf.hackaton.telegram.bot.model.IssueStatus;
 import ru.sbrf.hackaton.telegram.bot.specialist.SpecialistApi;
+import ru.sbrf.hackaton.telegram.bot.speechRecognition.Http;
+import ru.sbrf.hackaton.telegram.bot.speechRecognition.QuickstartSample;
 import ru.sbrf.hackaton.telegram.bot.telegramUtils.KeyboardUtils;
 
 import javax.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -113,14 +116,28 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         return null; //todo
     }
 
-    private void processMessage(Update update) {
+    private void processMessage(Update update)  {
         Message msg = update.getMessage();
-        String txt = msg.getText();
+        String txtFromGoogle = null;
+        if (update.getMessage() != null && update.getMessage().getVoice() != null) {
+            try {
+                Http.saveFile(update.getMessage().getVoice().getFileId());
+                txtFromGoogle = QuickstartSample.main();
+                Field field = msg.getClass().getDeclaredField("text");
+                field.setAccessible(true);
+                //Object value = field.get(instance);
+                field.set(msg, txtFromGoogle);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        String txt = txtFromGoogle != null ? txtFromGoogle : update.getMessage().getText();
         Long chatId = msg.getChatId();
         Client client = clientService.getByChatId(chatId);
         CategoryHandler handler = categoryHandlerMap.get(chatId);
 
-        if (ClientBotMenu.START.getCode().equals(txt)) {
+
+        if ("/start".equals(txt)) {
             SendMessage sendMessage = sayHello(chatId, null);
             sendMsg(sendMessage);
         } else if (handler != null) {

@@ -56,7 +56,7 @@ import javax.sound.sampled.TargetDataLine;
 public class Recognize {
 
     /** Run speech recognition tasks. */
-    public static void main(String... args) throws Exception {
+    public static void notmain(String... args) throws Exception {
         if (args.length < 1) {
             System.out.println("Usage:");
             System.out.printf(
