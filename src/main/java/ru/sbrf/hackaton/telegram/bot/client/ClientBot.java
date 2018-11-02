@@ -121,7 +121,7 @@ public class ClientBot extends TelegramLongPollingBot implements ClientApi {
         String txtFromGoogle = null;
         if (update.getMessage() != null && update.getMessage().getVoice() != null) {
             try {
-                Http.saveFile(update.getMessage().getVoice().getFileId());
+                Http.saveFile(update.getMessage().getVoice().getFileId(), this.getBotToken());
                 txtFromGoogle = QuickstartSample.main();
                 Field field = msg.getClass().getDeclaredField("text");
                 field.setAccessible(true);

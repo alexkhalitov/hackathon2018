@@ -13,8 +13,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import com.google.gson.Gson;
 
 public class Http {
-    public static void saveFile(String file_id) throws Exception {
-        String       postUrl       = "https://api.telegram.org/bot512352697:AAEtgjMGhbjsrttQ6WQy0r1dewNBFIU21Zw/getFile?file_id=" + file_id;// put in your url
+    public static void saveFile(String file_id, String token) throws Exception {
+        String       postUrl       = "https://api.telegram.org/bot"+token+"/getFile?file_id=" + file_id;// put in your url
         HttpClient   httpClient    = HttpClientBuilder.create().build();
         HttpPost     post          = new HttpPost(postUrl);
         post.setHeader("Content-type", "application/json");
@@ -26,7 +26,7 @@ public class Http {
         while ((line = rd.readLine()) != null) {
             fileName = line.split("file_path")[1].replaceAll("\"", "").replaceAll(":", "").replaceAll("}", "");
         }
-        URL url = new URL("https://api.telegram.org/file/bot512352697:AAEtgjMGhbjsrttQ6WQy0r1dewNBFIU21Zw/" + fileName);
+        URL url = new URL("https://api.telegram.org/file/bot"+token+"/" + fileName);
         URLConnection yc = url.openConnection();
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(
@@ -46,7 +46,9 @@ public class Http {
         InputStream inStream = conn.getInputStream();
 // Т.к. файл у нас бинарный, открываем ReadableByteChannel и создаем файл
         ReadableByteChannel rbc = Channels.newChannel(conn.getInputStream());
-        FileOutputStream fos = new FileOutputStream("C:\\Temp\\temp.oga");
+        File file = new File("C:\\Temp\\temp.oga");
+        file.getParentFile().mkdirs();
+        FileOutputStream fos = new FileOutputStream(file);
 
 // Перенаправляем данные из ReadableByteChannel прямо канал файла.
 // Говорят, так быстрее, чем по одному байту вычитывать из потока и писать в файл.
