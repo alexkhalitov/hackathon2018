@@ -150,7 +150,8 @@ public class SpecialistBot extends TelegramLongPollingBot implements SpecialistA
                     photo = BotUtils.getPhotoUrl(this, update.getMessage().getPhoto().get(update.getMessage().getPhoto().size() - 1));
                 }
                 clientApi.answer(issue, txt, photo);
-                sendMsg(new SendMessage(chatId, "<i>Сообщение отправлено клиенту</i>").enableHtml(true)
+                if(photo == null)
+                    sendMsg(new SendMessage(chatId, "<i>Сообщение отправлено клиенту</i>").enableHtml(true)
                         .setReplyMarkup(KeyboardUtils.getInlineButton("closeIssue"+issue.getId(), "Отправить запрос на закрытие")));
             }else {
                 sendMsg(new SendMessage(chatId, "<i>В данный момент у вас нет активной заявки</i>").enableHtml(true));
